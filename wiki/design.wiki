@@ -9,7 +9,7 @@ BuguMQ使用Redis作为MQ服务器。
 BuguMQ提供jar包作为java语言客户端。
 
 == 消息协议 ==
-BuguMQ使用文本（即Java String类型）传递消息，用户需要根据自己的项目，制定应用层的协议规范。
+BuguMQ使用Redis协议传输文本消息（即Java String类型）。在应用层，用户需要根据项目需求，制定自己的协议规范。
 
 == 消息队列：Queue ==
  * Queue队列采用生产者/消费者模式实现。
