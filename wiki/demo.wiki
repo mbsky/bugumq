@@ -68,7 +68,7 @@ client.publish("topic/1", "hello");
 client.publish("topic/2", "world");
 }}}
 
-注意：发布到Topic的消息，如果内容为"`_``_`EMPTY`_``_`"，BuguMQ会认为它是一个空消息，不会被投递到订阅者。该值由常量MQ.EMPTY_MESSAGE定义，供BuguMQ框架内部使用。
+注意：发布到Topic的消息，如果内容为"`_`EMPTY`_`"，BuguMQ会认为它是一个空消息，不会被投递到订阅者。该值由常量MQ.EMPTY_MESSAGE定义，供BuguMQ框架内部使用。
 
 ==订阅Topic消息==
 {{{
