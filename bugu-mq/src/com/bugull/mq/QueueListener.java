@@ -17,10 +17,11 @@
 package com.bugull.mq;
 
 /**
- *
+ * Listener to receive queue message.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public abstract class QueueMessageListener {
+public abstract class QueueListener {
     
     public abstract void onQueueMessage(String queue, String message);
 
