@@ -9,7 +9,7 @@ conn.setHost("192.168.0.200");
 conn.setPassword("foobared");
 conn.connect();
 }}}
-一个应用中，应该只有一个连接。在应用退出的时候，记得断开该连接：
+一个应用中，应该只有一个Connection，在应用开始的时候连接一次。在应用退出的时候，记得断开该连接：
 {{{
 conn.disconnect();
 }}}
