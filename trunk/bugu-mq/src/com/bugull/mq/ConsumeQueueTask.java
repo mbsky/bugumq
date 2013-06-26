@@ -48,7 +48,9 @@ public class ConsumeQueueTask implements Runnable {
                 String msg = jedis.get(msgId);
                 if(msg != null){
                     jedis.del(msgId);
-                    listener.onQueueMessage(queue, msg);
+                    synchronized(listener){
+                        listener.onQueueMessage(queue, msg);
+                    }
                 }
             }
             pool.returnResource(jedis);
