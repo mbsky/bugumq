@@ -21,8 +21,8 @@ Client client = conn.getClient();
 
 ==产生Queue消息==
 {{{
-client.produce("q1", "111");
-client.produce("q2", "222");
+client.produce("q1", "hello");
+client.produce("q2", "world");
 }}}
 
 ==消费Queue消息==
@@ -37,11 +37,27 @@ QueueListener listener = new QueueListener(){
 client.consume(listener, "q1", "q2");
 }}}
 
+一个client，可以有多个QueueListener。一个QueueListener，可以监听一个或多个Queue的消息。
+
+==停止消费==
+{{{
+client.stopConsume("q1");
+//停止所有的消费
+client.stopAllConsume();
+}}}
+
+==清空消息队列==
+{{{
+client.clearQueue("q1");
+}}}
+
 ==发布Topic消息==
 {{{
 client.publish("topic/1", "hello");
 client.publish("topic/2", "world");
 }}}
+
+注意：发布到Topic的消息，如果内容为"__EMPTY__"，BuguMQ会认为它是一个空消息，不会被投递到订阅者。该值由常量MQ.EMPTY_MESSAGE定义，供BuguMQ框架内部使用。
 
 ==订阅Topic消息==
 {{{
@@ -66,4 +82,19 @@ client.subscribe("topic/1", "topic/2");
 
 //按模式订阅
 //client.subscribePattern("topic/*");
+}}}
+
+一个Client，只有一个TopicListener，用来监听所有的Topic消息。这一点与Queue消息不同，值得注意。
+
+==退订==
+{{{
+client.unsubscribe("topic/1", "topic/2");
+
+//按模式退订
+//client.unsubscribePattern("topic/*");
+}}}
+
+==获取订阅者数量==
+{{{
+client.getSubsribersCount("topic/1");
 }}}
