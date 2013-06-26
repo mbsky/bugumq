@@ -16,7 +16,9 @@
 
 package com.bugull.mq;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -35,7 +37,10 @@ public class Client {
     
     private JedisPool pool;
     
+    private TopicListener topicListener;
+    
     private final ConcurrentMap<String, ExecutorService> map = new ConcurrentHashMap<String, ExecutorService>();
+    private final List<ExecutorService> list = new ArrayList<ExecutorService>();
     
     public Client(JedisPool pool){
         this.pool = pool;
@@ -47,32 +52,38 @@ public class Client {
         pool.returnResource(jedis);
     }
     
-    public void subscribeTopic(TopicMessageListener listener, String... topics){
-        Jedis jedis = pool.getResource();
-        jedis.subscribe(listener, topics);
-        pool.returnResource(jedis);
+    public void subscribe(String... topics) throws NoTopicListenerException{
+        if(topicListener == null){
+            throw new NoTopicListenerException("No TopicListener is set");
+        }
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        SubscribeTopicTask task = new SubscribeTopicTask(topicListener, pool, topics);
+        es.execute(task);
+        list.add(es);
     }
     
-    public void subscribePattern(PatternMessageListener listener, String... patterns){
-        Jedis jedis = pool.getResource();
-        jedis.psubscribe(listener, patterns);
-        pool.returnResource(jedis);
+    public void subscribePattern(String... patterns) throws NoTopicListenerException{
+        if(topicListener == null){
+            throw new NoTopicListenerException("No TopicListener is set");
+        }
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        SubscribePatternTask task = new SubscribePatternTask(topicListener, pool, patterns);
+        es.execute(task);
+        list.add(es);
     }
     
-    public void unsubscribeTopic(String... topics){
-        new Unsubscriber().unsubscribe(topics);
+    public void unsubscribe(String... topics) throws NoTopicListenerException{
+        if(topicListener == null){
+            throw new NoTopicListenerException("No TopicListener is set");
+        }
+        topicListener.unsubscribe(topics);
     }
     
-    public void unsubscribeAllTopic(){
-        new Unsubscriber().unsubscribe();
-    }
-    
-    public void unsubscribePattern(String... patterns){
-        new Unsubscriber().punsubscribe(patterns);
-    }
-    
-    public void unsubscribeAllPattern(){
-        new Unsubscriber().punsubscribe();
+    public void unsubscribePattern(String... patterns) throws NoTopicListenerException{
+        if(topicListener == null){
+            throw new NoTopicListenerException("No TopicListener is set");
+        }
+        topicListener.punsubscribe(patterns);
     }
     
     public long getSubsribersCount(String topic){
@@ -85,86 +96,92 @@ public class Client {
     public void produce(String queue, String... messages){
         Jedis jedis = pool.getResource();
         for(String msg : messages){
-            long id = jedis.incr(MQ.MSG_COUNT);
+            long count = jedis.incr(MQ.MSG_COUNT);
+            String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
             Transaction tx = jedis.multi();
-            tx.lpush(queue, msgId);
+            tx.lpush(queue, id);
             tx.set(msgId, msg);
             tx.exec();
         }
         pool.returnResource(jedis);
     }
     
-    public void produce(String queue, long ttl, String... messages){
+    public void produce(String queue, int expire, String... messages){
         Jedis jedis = pool.getResource();
         for(String msg : messages){
-            long id = jedis.incr(MQ.MSG_COUNT);
+            long count = jedis.incr(MQ.MSG_COUNT);
+            String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
             Transaction tx = jedis.multi();
-            tx.lpush(queue, msgId);
+            tx.lpush(queue, id);
             tx.set(msgId, msg);
-            tx.ttl(msgId);
+            tx.expire(msgId, expire);
             tx.exec();
         }
         pool.returnResource(jedis);
     }
     
-    public void produce(String queue, Date expire, String... messages){
+    public void produce(String queue, Date expireAt, String... messages){
         Jedis jedis = pool.getResource();
         for(String msg : messages){
-            long id = jedis.incr(MQ.MSG_COUNT);
+            long count = jedis.incr(MQ.MSG_COUNT);
+            String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
             Transaction tx = jedis.multi();
-            tx.lpush(queue, msgId);
+            tx.lpush(queue, id);
             tx.set(msgId, msg);
-            tx.expireAt(msgId, expire.getTime());
+            tx.expireAt(msgId, expireAt.getTime());
             tx.exec();
         }
         pool.returnResource(jedis);
     }
     
-    public void produceEmergency(String queue, String... messages){
+    public void produceUrgency(String queue, String... messages){
         Jedis jedis = pool.getResource();
         for(String msg : messages){
-            long id = jedis.incr(MQ.MSG_COUNT);
+            long count = jedis.incr(MQ.MSG_COUNT);
+            String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
             Transaction tx = jedis.multi();
-            tx.rpush(queue, msgId);
+            tx.rpush(queue, id);
             tx.set(msgId, msg);
             tx.exec();
         }
         pool.returnResource(jedis);
     }
     
-    public void produceEmergency(String queue, long ttl, String... messages){
+    public void produceUrgency(String queue, int expire, String... messages){
         Jedis jedis = pool.getResource();
         for(String msg : messages){
-            long id = jedis.incr(MQ.MSG_COUNT);
+            long count = jedis.incr(MQ.MSG_COUNT);
+            String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
             Transaction tx = jedis.multi();
-            tx.rpush(queue, msgId);
+            tx.rpush(queue, id);
             tx.set(msgId, msg);
-            tx.ttl(msgId);
+            tx.expire(msgId, expire);
             tx.exec();
         }
         pool.returnResource(jedis);
     }
     
-    public void produceEmergency(String queue, Date expire, String... messages){
+    public void produceUrgency(String queue, Date expireAt, String... messages){
         Jedis jedis = pool.getResource();
         for(String msg : messages){
-            long id = jedis.incr(MQ.MSG_COUNT);
+            long count = jedis.incr(MQ.MSG_COUNT);
+            String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
             Transaction tx = jedis.multi();
-            tx.rpush(queue, msgId);
+            tx.rpush(queue, id);
             tx.set(msgId, msg);
-            tx.expireAt(msgId, expire.getTime());
+            tx.expireAt(msgId, expireAt.getTime());
             tx.exec();
         }
         pool.returnResource(jedis);
     }
     
-    public void consume(QueueMessageListener listener, String... queues){
+    public void consume(QueueListener listener, String... queues){
         for(String queue : queues){
             ExecutorService es = map.get(queue);
             if(es == null){
@@ -195,6 +212,14 @@ public class Client {
         }
     }
     
+    public void stopAllTopicTask(){
+        for(ExecutorService es : list){
+            if(es != null){
+                es.shutdownNow();
+            }
+        }
+    }
+    
     public void clearQueue(String... queues){
         Jedis jedis = pool.getResource();
         jedis.del(queues);
@@ -206,6 +231,10 @@ public class Client {
         long size = jedis.llen(queue);
         pool.returnResource(jedis);
         return size;
+    }
+
+    public void setTopicListener(TopicListener topicListener) {
+        this.topicListener = topicListener;
     }
 
 }

@@ -63,6 +63,7 @@ public class Connection {
     public void disconnect(){
         if(client != null){
             client.stopAllConsume();
+            client.stopAllTopicTask();
         }
         if(pool != null){
             pool.destroy();
