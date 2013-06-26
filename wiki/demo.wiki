@@ -53,7 +53,7 @@ client.consume(listener, "q1", "q2");
 {{{
 client.stopConsume("q1");
 //停止所有的消费
-client.stopAllConsume();
+//client.stopAllConsume();
 }}}
 
 ==清空消息队列==
