@@ -1,0 +1,69 @@
+#summary 使用示例
+
+= BuguMQ的使用说明 =
+
+==建立连接==
+{{{
+Connection conn = Connection.getInstance();
+conn.setHost("192.168.0.200");
+conn.setPassword("foobared");
+conn.connect();
+}}}
+一个应用中，应该只有一个连接。在应用退出的时候，记得断开该连接：
+{{{
+conn.disconnect();
+}}}
+
+==获取Client==
+{{{
+Client client = conn.getClient();
+}}}
+
+==产生Queue消息==
+{{{
+client.produce("q1", "111");
+client.produce("q2", "222");
+}}}
+
+==消费Queue消息==
+{{{
+QueueListener listener = new QueueListener(){
+    @Override
+    public void onQueueMessage(String queue, String message) {
+        System.out.println("queue: " + queue);
+        System.out.println("message: " + message);
+    }
+};
+client.consume(listener, "q1", "q2");
+}}}
+
+==发布Topic消息==
+{{{
+client.publish("topic/1", "hello");
+client.publish("topic/2", "world");
+}}}
+
+==订阅Topic消息==
+{{{
+TopicListener listener = new TopicListener(){
+    @Override
+    public void onTopicMessage(String topic, String message) {
+        System.out.println("topic: " + topic);
+        System.out.println("message: " + message);
+    }
+            
+    @Override
+    public void onPatternMessage(String pattern, String topic, String message) {
+        System.out.println("pattern: " + pattern);
+        System.out.println("topic: " + topic);
+        System.out.println("message: " + message);
+    }
+};
+        
+client.setTopicListener(listener);
+        
+client.subscribe("topic/1", "topic/2");
+
+//按模式订阅
+//client.subscribePattern("topic/*");
+}}}
