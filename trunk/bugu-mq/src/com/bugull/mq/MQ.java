@@ -24,7 +24,7 @@ package com.bugull.mq;
 public final class MQ {
     
     public static final int DEFAULT_PORT = 6379;
-    public static final int DEFAULT_SO_TIMEOUT = 2000;
+    public static final int DEFAULT_SO_TIMEOUT = 3000;
     public static final int DEFAULT_DATABASE = 0;
     
     public static final String EMPTY_MESSAGE = "_EMPTY_";
