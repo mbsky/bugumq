@@ -31,14 +31,18 @@ public abstract class TopicListener extends JedisPubSub {
     
     @Override
     public void onMessage(String channel, String message){
-        if(message!=null && !message.equals(MQ.EMPTY_MESSAGE)){
-            onTopicMessage(channel, message);
+        synchronized(this){
+            if(message!=null && !message.equals(MQ.EMPTY_MESSAGE)){
+                onTopicMessage(channel, message);
+            }
         }
     }
     
     @Override
     public void onPMessage(String pattern, String channel, String message){
-        onPatternMessage(pattern, channel, message);
+        synchronized(this){
+            onPatternMessage(pattern, channel, message);
+        }
     }
     
     @Override
