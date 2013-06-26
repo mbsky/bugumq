@@ -1,6 +1,6 @@
 #summary 使用示例
 
-= BuguMQ的使用说明 =
+= BuguMQ的使用示例 =
 
 ==建立连接==
 {{{
@@ -23,6 +23,16 @@ Client client = conn.getClient();
 {{{
 client.produce("q1", "hello");
 client.produce("q2", "world");
+
+//产生紧急消息
+client.produceUrgency("q1", "hurry up!");
+
+//产生有效期为1分钟的消息
+client.produce("q1", 60, "my message");
+
+//产生2020年6月26日到期的消息
+Date expireAt = parseDate("2020-06-20");
+client.produce("q1", expireAt, "my message");
 }}}
 
 ==消费Queue消息==
