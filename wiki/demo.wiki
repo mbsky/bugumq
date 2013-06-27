@@ -75,6 +75,9 @@ client.stopConsume("q1");
 {{{
 client.publish("topic/1", "hello");
 client.publish("topic/2", "world");
+
+//发布保留消息
+client.publishRetain("topic/2", "welcome!");
 }}}
 
 ==订阅Topic消息==
