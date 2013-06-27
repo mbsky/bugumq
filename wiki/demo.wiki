@@ -42,8 +42,8 @@ long size = client.getQueueSize("q1");
 
 ==删除队列中的消息==
 {{{
-//保留队列中最新的5条消息，其它则移除
-client.keepTail("q1", 5);
+//清除队列中的消息，只保留最新的5条。
+client.retainQueue("q1", 5);
 
 //清除队列中的全部消息
 client.clearQueue("q1");
