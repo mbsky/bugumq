@@ -222,7 +222,26 @@ public class Client {
     
     public void clearQueue(String... queues){
         Jedis jedis = pool.getResource();
-        jedis.del(queues);
+        for(String queue : queues){
+            long size = jedis.llen(queue);
+            for(long i=0; i<size; i++){
+                String id = jedis.rpop(queue);
+                String msgId = MQ.MSG_ID + id;
+                jedis.del(msgId);
+            }
+        }
+        pool.returnResource(jedis);
+    }
+    
+    public void keepLatest(String queue, long n){
+        Jedis jedis = pool.getResource();
+        long size = jedis.llen(queue);
+        long count = size - n;
+        for(long i=0; i<count; i++){
+            String id = jedis.rpop(queue);
+            String msgId = MQ.MSG_ID + id;
+            jedis.del(msgId);
+        }
         pool.returnResource(jedis);
     }
     
