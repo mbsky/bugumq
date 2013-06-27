@@ -57,6 +57,11 @@ client.stopConsume("q1");
 //client.stopAllConsume();
 }}}
 
+==获取队列中消息数量==
+{{{
+long size = client.getQueueSize("q1");
+}}}
+
 ==清空消息队列==
 {{{
 client.clearQueue("q1");
@@ -107,5 +112,5 @@ client.unsubscribe("topic/1", "topic/2");
 
 ==获取订阅者数量==
 {{{
-client.getSubsribersCount("topic/1");
+long count = client.getSubsribersCount("topic/1");
 }}}
