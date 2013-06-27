@@ -46,7 +46,7 @@ long size = client.getQueueSize("q1");
 client.retainQueue("q1", 5);
 
 //清除队列中的全部消息
-client.clearQueue("q1");
+//client.clearQueue("q1");
 }}}
 
 ==消费Queue消息==
