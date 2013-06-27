@@ -98,4 +98,8 @@ public class Connection {
         this.database = database;
     }
 
+    public JedisPool getPool() {
+        return pool;
+    }
+
 }

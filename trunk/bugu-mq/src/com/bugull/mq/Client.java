@@ -52,6 +52,15 @@ public class Client {
         pool.returnResource(jedis);
     }
     
+    public void publishRetain(String topic, String message){
+        Jedis jedis = pool.getResource();
+        Transaction tx = jedis.multi();
+        tx.publish(topic, message);
+        tx.set(MQ.TOPIC + topic, message);
+        tx.exec();
+        pool.returnResource(jedis);
+    }
+    
     public void subscribe(String... topics) throws NoTopicListenerException{
         if(topicListener == null){
             throw new NoTopicListenerException("No TopicListener is set");
@@ -226,21 +235,23 @@ public class Client {
             long size = jedis.llen(queue);
             for(long i=0; i<size; i++){
                 String id = jedis.rpop(queue);
-                String msgId = MQ.MSG_ID + id;
-                jedis.del(msgId);
+                if(!StringUtil.isNull(id)){
+                    jedis.del(MQ.MSG_ID + id);
+                }
             }
         }
         pool.returnResource(jedis);
     }
     
-    public void keepLatest(String queue, long n){
+    public void retainQueue(String queue, long retainSize){
         Jedis jedis = pool.getResource();
         long size = jedis.llen(queue);
-        long count = size - n;
+        long count = size - retainSize;
         for(long i=0; i<count; i++){
             String id = jedis.rpop(queue);
-            String msgId = MQ.MSG_ID + id;
-            jedis.del(msgId);
+            if(!StringUtil.isNull(id)){
+                jedis.del(MQ.MSG_ID + id);
+            }
         }
         pool.returnResource(jedis);
     }
@@ -254,6 +265,12 @@ public class Client {
 
     public void setTopicListener(TopicListener topicListener) {
         this.topicListener = topicListener;
+    }
+    
+    public void flushDB(){
+        Jedis jedis = pool.getResource();
+        jedis.flushDB();
+        pool.returnResource(jedis);
     }
 
 }

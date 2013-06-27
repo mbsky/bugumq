@@ -46,7 +46,7 @@ public class ConsumeQueueTask implements Runnable {
             if(list!=null && list.size()==2){
                 String msgId = MQ.MSG_ID + list.get(1);
                 String msg = jedis.get(msgId);
-                if(msg != null){
+                if(!StringUtil.isNull(msg)){
                     jedis.del(msgId);
                     synchronized(listener){
                         listener.onQueueMessage(queue, msg);

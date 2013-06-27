@@ -16,6 +16,9 @@
 
 package com.bugull.mq;
 
+import java.util.Set;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;
 
 /**
@@ -47,7 +50,34 @@ public abstract class TopicListener extends JedisPubSub {
     
     @Override
     public void onSubscribe(String channel, int subscribedChannels){
-        //do nothing
+        Connection conn = Connection.getInstance();
+        JedisPool pool = conn.getPool();
+        Jedis jedis = pool.getResource();
+        String retainMessage = jedis.get(MQ.TOPIC + channel);
+        if(!StringUtil.isNull(retainMessage)){
+            synchronized(this){
+                onTopicMessage(channel, retainMessage);
+            }
+        }
+        pool.returnResource(jedis);
+    }
+    
+    @Override
+    public void onPSubscribe(String pattern, int subscribedChannels){
+        Connection conn = Connection.getInstance();
+        JedisPool pool = conn.getPool();
+        Jedis jedis = pool.getResource();
+        int len = MQ.TOPIC.length();
+        Set<String> set = jedis.keys(MQ.TOPIC + pattern);
+        for(String s : set){
+            String retainMessage = jedis.get(s);
+            if(!StringUtil.isNull(retainMessage)){
+                synchronized(this){
+                    onPatternMessage(pattern, s.substring(len), retainMessage);
+                }
+            }
+        }
+        pool.returnResource(jedis);
     }
 
     @Override
@@ -57,11 +87,6 @@ public abstract class TopicListener extends JedisPubSub {
 
     @Override
     public void onPUnsubscribe(String pattern, int subscribedChannels){
-        //do nothing
-    }
-
-    @Override
-    public void onPSubscribe(String pattern, int subscribedChannels){
         //do nothing
     }
 
