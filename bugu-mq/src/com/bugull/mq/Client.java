@@ -16,9 +16,8 @@
 
 package com.bugull.mq;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -39,8 +38,8 @@ public class Client {
     
     private TopicListener topicListener;
     
-    private final ConcurrentMap<String, ExecutorService> map = new ConcurrentHashMap<String, ExecutorService>();
-    private final List<ExecutorService> list = new ArrayList<ExecutorService>();
+    private final ConcurrentMap<String, ExecutorService> queueServices = new ConcurrentHashMap<String, ExecutorService>();
+    private final ConcurrentMap<String, ExecutorService> topicServices = new ConcurrentHashMap<String, ExecutorService>();
     
     public Client(JedisPool pool){
         this.pool = pool;
@@ -65,20 +64,32 @@ public class Client {
         if(topicListener == null){
             throw new NoTopicListenerException("No TopicListener is set");
         }
-        ExecutorService es = Executors.newSingleThreadExecutor();
-        SubscribeTopicTask task = new SubscribeTopicTask(topicListener, pool, topics);
-        es.execute(task);
-        list.add(es);
+        String key = StringUtil.concat(topics);
+        ExecutorService es = topicServices.get(key);
+        if(es == null){
+            es = Executors.newSingleThreadExecutor();
+            ExecutorService temp = topicServices.putIfAbsent(key, es);
+            if(temp == null){
+                SubscribeTopicTask task = new SubscribeTopicTask(topicListener, pool, topics);
+                es.execute(task);
+            }
+        }
     }
     
     public void subscribePattern(String... patterns) throws NoTopicListenerException{
         if(topicListener == null){
             throw new NoTopicListenerException("No TopicListener is set");
         }
-        ExecutorService es = Executors.newSingleThreadExecutor();
-        SubscribePatternTask task = new SubscribePatternTask(topicListener, pool, patterns);
-        es.execute(task);
-        list.add(es);
+        String key = StringUtil.concat(patterns);
+        ExecutorService es = topicServices.get(key);
+        if(es == null){
+            es = Executors.newSingleThreadExecutor();
+            ExecutorService temp = topicServices.putIfAbsent(key, es);
+            if(temp == null){
+                SubscribePatternTask task = new SubscribePatternTask(topicListener, pool, patterns);
+                es.execute(task);
+            }
+        }
     }
     
     public void unsubscribe(String... topics) throws NoTopicListenerException{
@@ -192,10 +203,10 @@ public class Client {
     
     public void consume(QueueListener listener, String... queues){
         for(String queue : queues){
-            ExecutorService es = map.get(queue);
+            ExecutorService es = queueServices.get(queue);
             if(es == null){
                 es = Executors.newSingleThreadExecutor();
-                ExecutorService temp = map.putIfAbsent(queue, es);
+                ExecutorService temp = queueServices.putIfAbsent(queue, es);
                 if(temp == null){
                     ConsumeQueueTask task = new ConsumeQueueTask(listener, pool, queue);
                     es.execute(task);
@@ -206,23 +217,24 @@ public class Client {
     
     public void stopConsume(String... queues){
         for(String queue : queues){
-            ExecutorService es = map.get(queue);
+            ExecutorService es = queueServices.get(queue);
             if(es != null){
                 es.shutdownNow();
-                map.remove(queue);
+                queueServices.remove(queue);
             }
         }
     }
     
     public void stopAllConsume(){
-        Set<String> set = map.keySet();
+        Set<String> set = queueServices.keySet();
         for(String queue : set){
             stopConsume(queue);
         }
     }
     
     public void stopAllTopicTask(){
-        for(ExecutorService es : list){
+        Collection<ExecutorService> coll = topicServices.values();
+        for(ExecutorService es : coll){
             if(es != null){
                 es.shutdownNow();
             }

@@ -25,5 +25,19 @@ public final class StringUtil {
     public static boolean isNull(String s){
         return s==null || s.toLowerCase().equals("nil");
     }
+    
+    /**
+     * Concat string array elements with comma
+     * @param arr
+     * @return 
+     */
+    public static String concat(String... arr){
+        StringBuilder sb = new StringBuilder();
+        for(String s : arr){
+            sb.append(s).append(",");
+        }
+        String result = sb.toString();
+        return result.substring(0, result.length()-1);
+    }
 
 }
