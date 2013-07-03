@@ -107,6 +107,8 @@ client.subscribe("topic/1", "topic/2");
 
 一个Client，只有一个TopicListener，用来监听所有的Topic消息。这一点与Queue消息不同，值得注意。
 
+请尽量一次订阅多个Topic，而不要逐个订阅。因为在BuguMQ内部，每次订阅，都需要产生一个新的线程。
+
 ==退订==
 {{{
 client.unsubscribe("topic/1", "topic/2");
