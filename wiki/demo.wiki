@@ -15,6 +15,7 @@ conn.disconnect();
 }}}
 
 *注意：*
+
 Connection内部使用了连接池，默认最多是8个连接，你可以自己定义这个数值，如下：
 {{{
 JedisPoolConfig config = new JedisPoolConfig();
