@@ -78,6 +78,9 @@ client.publish("topic/2", "world");
 
 //发布保留消息
 client.publishRetain("topic/2", "welcome!");
+
+//清除保留的消息
+//client.clearRetainMessage("topic/2");
 }}}
 
 ==订阅Topic消息==
