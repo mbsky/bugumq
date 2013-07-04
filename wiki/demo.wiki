@@ -14,6 +14,17 @@ conn.connect();
 conn.disconnect();
 }}}
 
+*注意：*
+Connection内部使用了连接池，默认最多是8个连接，你可以自己定义这个数值，如下：
+{{{
+JedisPoolConfig config = new JedisPoolConfig();
+config.setMaxActive(10);  //最多10个连接
+conn.setPoolConfig(config);
+        
+conn.connect();
+}}}
+关于JedisPoolConfig的更多参数设置，请[https://github.com/xetorthio/jedis/blob/master/src/main/java/redis/clients/jedis/JedisPoolConfig.java 查看其源代码]。
+
 ==获取Client==
 {{{
 Client client = conn.getClient();
