@@ -9,12 +9,12 @@ conn.setHost("192.168.0.200");
 conn.setPassword("foobared");
 conn.connect();
 }}}
+
 一个应用中，应该只有一个Connection，在应用开始的时候连接一次。在应用退出的时候，记得断开该连接：
+
 {{{
 conn.disconnect();
 }}}
-
-*注意：*
 
 Connection内部使用了连接池，默认最多是8个连接，你可以自己定义这个数值，如下：
 {{{
