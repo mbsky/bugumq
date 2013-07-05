@@ -233,16 +233,16 @@ public class Client {
     
     public void stopConsume(String... queues){
         for(String queue : queues){
-            ExecutorService es = queueServices.get(queue);
-            if(es != null){
-                es.shutdownNow();
-                queueServices.remove(queue);
-            }
             BlockedTask task = blockedTasks.get(queue);
             if(task != null){
                 task.setStopped(true);
                 task.getJedis().disconnect();
                 blockedTasks.remove(queue);
+            }
+            ExecutorService es = queueServices.get(queue);
+            if(es != null){
+                es.shutdownNow();
+                queueServices.remove(queue);
             }
         }
     }
@@ -257,13 +257,13 @@ public class Client {
     public void stopAllTopicTask(){
         Set<String> set = topicServices.keySet();
         for(String topic : set){
-            ExecutorService es = topicServices.get(topic);
-            if(es != null){
-                es.shutdownNow();
-            }
             BlockedTask task = blockedTasks.get(topic);
             if(task != null){
                 task.getJedis().disconnect();
+            }
+            ExecutorService es = topicServices.get(topic);
+            if(es != null){
+                es.shutdownNow();
             }
         }
     }
