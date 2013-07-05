@@ -140,3 +140,8 @@ client.unsubscribe("topic/1", "topic/2");
 {{{
 long count = client.getSubsribersCount("topic/1");
 }}}
+
+==清空MQ服务器中的所有消息==
+{{{
+client.flushDB();
+}}}
