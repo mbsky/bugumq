@@ -26,9 +26,14 @@ import redis.clients.jedis.Jedis;
 public abstract class BlockedTask implements Runnable {
     
     protected Jedis jedis;
+    protected boolean stopped;
     
     public Jedis getJedis(){
         return jedis;
+    }
+    
+    public void setStopped(boolean stopped){
+        this.stopped = stopped;
     }
 
 }

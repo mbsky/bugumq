@@ -240,7 +240,9 @@ public class Client {
             }
             BlockedTask task = blockedTasks.get(queue);
             if(task != null){
+                task.setStopped(true);
                 task.getJedis().disconnect();
+                blockedTasks.remove(queue);
             }
         }
     }
