@@ -24,7 +24,7 @@ import redis.clients.jedis.JedisPool;
  * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class SubscribeTopicTask implements Runnable {
+public class SubscribeTopicTask extends BlockedTask {
     
     private TopicListener listener;
     private JedisPool pool;
@@ -38,9 +38,11 @@ public class SubscribeTopicTask implements Runnable {
 
     @Override
     public void run() {
-        Jedis jedis = pool.getResource();
-        jedis.subscribe(listener, topics);
-        pool.returnResource(jedis);
+        Jedis j = pool.getResource();
+        this.jedis = j;
+        //the subscribe method is blocked.
+        j.subscribe(listener, topics);
+        pool.returnResource(j);
     }
 
 }
