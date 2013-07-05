@@ -39,11 +39,17 @@ public class ConsumeQueueTask extends BlockedTask {
 
     @Override
     public void run() {
-        while(true){
+        while(!stopped){
             Jedis j = pool.getResource();
             this.jedis = j;
+            
+            List<String> list = null;
             //block until get a message
-            List<String> list = j.brpop(0, queue);
+            try{
+                list = j.brpop(0, queue);
+            }catch(Exception ex){
+                //ignore the exception
+            }
             if(list!=null && list.size()==2){
                 String msgId = MQ.MSG_ID + list.get(1);
                 String msg = j.get(msgId);
@@ -54,6 +60,7 @@ public class ConsumeQueueTask extends BlockedTask {
                     }
                 }
             }
+            
             pool.returnResource(j);
         }
     }

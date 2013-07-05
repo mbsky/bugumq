@@ -40,8 +40,10 @@ public class SubscribeTopicTask extends BlockedTask {
     public void run() {
         Jedis j = pool.getResource();
         this.jedis = j;
+        
         //the subscribe method is blocked.
         j.subscribe(listener, topics);
+        
         pool.returnResource(j);
     }
 

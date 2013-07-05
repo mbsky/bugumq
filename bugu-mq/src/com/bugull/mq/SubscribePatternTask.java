@@ -40,8 +40,10 @@ public class SubscribePatternTask extends BlockedTask {
     public void run() {
         Jedis j = pool.getResource();
         this.jedis = j;
+        
         //the psubscribe method is blocked.
         j.psubscribe(listener, patterns);
+        
         pool.returnResource(j);
     }
 
