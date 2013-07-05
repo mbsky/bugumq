@@ -16,7 +16,6 @@
 
 package com.bugull.mq;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +40,9 @@ public class Client {
     private final ConcurrentMap<String, ExecutorService> queueServices = new ConcurrentHashMap<String, ExecutorService>();
     private final ConcurrentMap<String, ExecutorService> topicServices = new ConcurrentHashMap<String, ExecutorService>();
     
+    //store the blocked tasks, in order to close the jedis client.
+    private final ConcurrentMap<String, BlockedTask> blockedTasks = new ConcurrentHashMap<String, BlockedTask>();
+    
     public Client(JedisPool pool){
         this.pool = pool;
     }
@@ -60,6 +62,17 @@ public class Client {
         pool.returnResource(jedis);
     }
     
+    public void clearRetainMessage(String... topics){
+        int len = topics.length;
+        String[] keys = new String[len];
+        for(int i=0; i< len; i++){
+            keys[i] = MQ.TOPIC + topics[i];
+        }
+        Jedis jedis = pool.getResource();
+        jedis.del(keys);
+        pool.returnResource(jedis);
+    }
+    
     public void subscribe(String... topics) throws NoTopicListenerException{
         if(topicListener == null){
             throw new NoTopicListenerException("No TopicListener is set");
@@ -72,6 +85,7 @@ public class Client {
             if(temp == null){
                 SubscribeTopicTask task = new SubscribeTopicTask(topicListener, pool, topics);
                 es.execute(task);
+                blockedTasks.putIfAbsent(key, task);
             }
         }
     }
@@ -88,6 +102,7 @@ public class Client {
             if(temp == null){
                 SubscribePatternTask task = new SubscribePatternTask(topicListener, pool, patterns);
                 es.execute(task);
+                blockedTasks.putIfAbsent(key, task);
             }
         }
     }
@@ -210,6 +225,7 @@ public class Client {
                 if(temp == null){
                     ConsumeQueueTask task = new ConsumeQueueTask(listener, pool, queue);
                     es.execute(task);
+                    blockedTasks.putIfAbsent(queue, task);
                 }
             }
         }
@@ -222,6 +238,10 @@ public class Client {
                 es.shutdownNow();
                 queueServices.remove(queue);
             }
+            BlockedTask task = blockedTasks.get(queue);
+            if(task != null){
+                task.getJedis().disconnect();
+            }
         }
     }
     
@@ -233,10 +253,15 @@ public class Client {
     }
     
     public void stopAllTopicTask(){
-        Collection<ExecutorService> coll = topicServices.values();
-        for(ExecutorService es : coll){
+        Set<String> set = topicServices.keySet();
+        for(String topic : set){
+            ExecutorService es = topicServices.get(topic);
             if(es != null){
                 es.shutdownNow();
+            }
+            BlockedTask task = blockedTasks.get(topic);
+            if(task != null){
+                task.getJedis().disconnect();
             }
         }
     }

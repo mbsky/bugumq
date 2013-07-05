@@ -17,32 +17,18 @@
 package com.bugull.mq;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
 /**
- * Thread to receive pattern message.
+ * Store the blocked jedis client, in order to close it.
  * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class SubscribePatternTask extends BlockedTask {
+public abstract class BlockedTask implements Runnable {
     
-    private TopicListener listener;
-    private JedisPool pool;
-    private String[] patterns;
-
-    public SubscribePatternTask(TopicListener listener, JedisPool pool, String[] patterns) {
-        this.listener = listener;
-        this.pool = pool;
-        this.patterns = patterns;
-    }
-
-    @Override
-    public void run() {
-        Jedis j = pool.getResource();
-        this.jedis = j;
-        //the psubscribe method is blocked.
-        j.psubscribe(listener, patterns);
-        pool.returnResource(j);
+    protected Jedis jedis;
+    
+    public Jedis getJedis(){
+        return jedis;
     }
 
 }

@@ -25,7 +25,7 @@ import redis.clients.jedis.JedisPool;
  * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class ConsumeQueueTask implements Runnable {
+public class ConsumeQueueTask extends BlockedTask {
     
     private QueueListener listener;
     private JedisPool pool;
@@ -40,20 +40,21 @@ public class ConsumeQueueTask implements Runnable {
     @Override
     public void run() {
         while(true){
-            Jedis jedis = pool.getResource();
+            Jedis j = pool.getResource();
+            this.jedis = j;
             //block until get a message
-            List<String> list = jedis.brpop(0, queue);
+            List<String> list = j.brpop(0, queue);
             if(list!=null && list.size()==2){
                 String msgId = MQ.MSG_ID + list.get(1);
-                String msg = jedis.get(msgId);
+                String msg = j.get(msgId);
                 if(!StringUtil.isNull(msg)){
-                    jedis.del(msgId);
+                    j.del(msgId);
                     synchronized(listener){
                         listener.onQueueMessage(queue, msg);
                     }
                 }
             }
-            pool.returnResource(jedis);
+            pool.returnResource(j);
         }
     }
 
