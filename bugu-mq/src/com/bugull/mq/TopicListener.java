@@ -34,7 +34,7 @@ public abstract class TopicListener extends JedisPubSub {
     @Override
     public void onMessage(String channel, String message){
         synchronized(this){
-            if(message!=null && !message.equals(MQ.EMPTY_MESSAGE)){
+            if(message!=null && !message.equals(Message.EMPTY)){
                 onTopicMessage(channel, message);
             }
         }
