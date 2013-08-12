@@ -123,7 +123,7 @@ public class Client {
     
     public long getSubsribersCount(String topic){
         Jedis jedis = pool.getResource();
-        long count = jedis.publish(topic, MQ.EMPTY_MESSAGE);
+        long count = jedis.publish(topic, Message.EMPTY);
         pool.returnResource(jedis);
         return count;
     }

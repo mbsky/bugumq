@@ -17,20 +17,11 @@
 package com.bugull.mq;
 
 /**
- * Constants for buguMQ framework.
- * 
+ *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public final class MQ {
+public final class Message {
     
-    public static final int DEFAULT_PORT = 6379;
-    public static final int DEFAULT_SO_TIMEOUT = 3000;
-    public static final int DEFAULT_DATABASE = 0;
-    
-    public static final String MSG_COUNT = "msg:count";
-    
-    public static final String MSG_ID = "msg:id:";
-    
-    public static final String TOPIC = "topic:";
+    public static final String EMPTY = "_EMPTY_";
 
 }
