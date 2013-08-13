@@ -16,8 +16,8 @@
 
 package com.bugull.mq;
 
+import java.io.File;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -317,35 +317,12 @@ public class Client {
     public void listenFile(FileListener fileListener, String myClientId){
         this.fileListener = fileListener;
         this.myClientId = myClientId;
-        this.consume(new MyFileQueueListener(), MQ.FILE_CLIENT + myClientId);
+        this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + myClientId);
     }
     
     private void checkFileListener() throws NoFileListenerException{
         if(fileListener == null){
             throw new NoFileListenerException("No FileListener is set");
-        }
-    }
-    
-    class MyFileQueueListener extends QueueListener {
-        @Override
-        public void onQueueMessage(String queue, String message) {
-            if(StringUtil.isEmpty(message)){
-                return;
-            }
-            FileMessage fm = FileMessage.parse(message);
-            String fromClientId = fm.getFromClientId();
-            long fileId = fm.getFileId();
-            String messageType = fm.getMessageType();
-            String filePath = fm.getFilePath();
-            if(messageType!=null && messageType.equals(MQ.FILE_REQUEST_MESSAGE)){
-                fileListener.onRequest(fromClientId, fileId, filePath);
-            }
-            else if(messageType!=null && messageType.equals(MQ.FILE_AGREE_MESSAGE)){
-                fileListener.onAgree(fromClientId, fileId, filePath);
-            }
-            else if(messageType!=null && messageType.equals(MQ.FILE_REJECT_MESSAGE)){
-                fileListener.onReject(fromClientId, fileId, filePath);
-            }
         }
     }
     
@@ -358,6 +335,8 @@ public class Client {
         fm.setFileId(count);
         fm.setMessageType(MQ.FILE_REQUEST_MESSAGE);
         fm.setFilePath(filePath);
+        File f = new File(filePath);
+        fm.setFileLength(f.length());
         this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
         pool.returnResource(jedis);
     }
@@ -378,7 +357,7 @@ public class Client {
         pool.returnResource(jedis);
     }
     
-    public void agreeReceiveFile(String toClientId, long fileId, String filePath) throws NoFileListenerException{
+    public void agreeReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws NoFileListenerException{
         checkFileListener();
         Jedis jedis = pool.getResource();
         //send agree message
@@ -387,37 +366,15 @@ public class Client {
         fm.setFileId(fileId);
         fm.setMessageType(MQ.FILE_AGREE_MESSAGE);
         fm.setFilePath(filePath);
+        fm.setFileLength(fileLength);
         this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
-        //consume che FILE_CHUNKS queue
-        boolean stopped = false;
-        byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
-        while(!stopped){
-            List<byte[]> list = null;
-            try{
-                list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
-            }catch(Exception ex){
-                //ignore ex
-            }
-            if(list!=null && list.size()==2){
-                byte[] data = list.get(1);
-                if(data.length != MQ.EMPTY_MESSAGE.length()){
-                    fileListener.onFileData(fileId, data);
-                }
-                else{
-                    String eof = new String(data);
-                    if(eof.equals(MQ.EMPTY_MESSAGE)){
-                        stopped = true;
-                    }else{
-                        fileListener.onFileData(fileId, data);
-                    }
-                }
-            }
-        }
-        fileListener.onFileEnd(fileId);
         pool.returnResource(jedis);
+        //start a thread to receive file data
+        FileDataTask task = new FileDataTask(fileListener, pool, fileId);
+        new Thread(task).start();
     }
     
-    public void rejectReceiveFile(String toClientId, long fileId, String filePath) throws NoFileListenerException{
+    public void rejectReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws NoFileListenerException{
         checkFileListener();
         Jedis jedis = pool.getResource();
         //send reject message;
@@ -426,6 +383,7 @@ public class Client {
         fm.setFileId(fileId);
         fm.setMessageType(MQ.FILE_REJECT_MESSAGE);
         fm.setFilePath(filePath);
+        fm.setFileLength(fileLength);
         this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
         pool.returnResource(jedis);
     }

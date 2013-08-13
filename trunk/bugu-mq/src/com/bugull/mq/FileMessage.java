@@ -26,6 +26,7 @@ public class FileMessage {
     private long fileId;
     private String messageType;
     private String filePath;
+    private long fileLength;
 
     public long getFileId() {
         return fileId;
@@ -58,6 +59,14 @@ public class FileMessage {
     public void setFromClientId(String fromClientId) {
         this.fromClientId = fromClientId;
     }
+
+    public long getFileLength() {
+        return fileLength;
+    }
+
+    public void setFileLength(long fileLength) {
+        this.fileLength = fileLength;
+    }
     
     public static FileMessage parse(String s){
         String[] arr = s.split(MQ.SPLIT_MESSAGE);
@@ -66,6 +75,7 @@ public class FileMessage {
         fm.setFileId(Long.parseLong(arr[1]));
         fm.setMessageType(arr[2]);
         fm.setFilePath(arr[3]);
+        fm.setFileLength(Long.parseLong(arr[4]));
         return fm;
     }
     
@@ -73,11 +83,14 @@ public class FileMessage {
     public String toString(){
         StringBuilder sb = new StringBuilder();
         sb.append(fromClientId);
+        sb.append(MQ.SPLIT_MESSAGE);
         sb.append(fileId);
         sb.append(MQ.SPLIT_MESSAGE);
         sb.append(messageType);
         sb.append(MQ.SPLIT_MESSAGE);
         sb.append(filePath);
+        sb.append(MQ.SPLIT_MESSAGE);
+        sb.append(fileLength);
         return sb.toString();
     }
 

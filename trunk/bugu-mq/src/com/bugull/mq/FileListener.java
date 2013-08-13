@@ -22,11 +22,11 @@ package com.bugull.mq;
  */
 public abstract class FileListener {
     
-    public abstract void onRequest(String fromClientId, long fileId, String filePath);
+    public abstract void onRequest(String fromClientId, long fileId, String filePath, long fileLength);
     
-    public abstract void onAgree(String fromClientId, long fileId, String filePath);
+    public abstract void onAgree(String fromClientId, long fileId, String filePath, long fileLength);
     
-    public abstract void onReject(String fromClientId, long fileId, String filePath);
+    public abstract void onReject(String fromClientId, long fileId, String filePath, long fileLength);
     
     public abstract void onFileData(long fileId, byte[] data);
     
