@@ -17,6 +17,7 @@
 package com.bugull.mq;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -36,6 +37,9 @@ public class Client {
     private JedisPool pool;
     
     private TopicListener topicListener;
+    
+    private FileListener fileListener;
+    private String myClientId;
     
     private final ConcurrentMap<String, ExecutorService> queueServices = new ConcurrentHashMap<String, ExecutorService>();
     private final ConcurrentMap<String, ExecutorService> topicServices = new ConcurrentHashMap<String, ExecutorService>();
@@ -73,10 +77,14 @@ public class Client {
         pool.returnResource(jedis);
     }
     
-    public void subscribe(String... topics) throws NoTopicListenerException{
+    private void checkTopicListener() throws NoTopicListenerException{
         if(topicListener == null){
             throw new NoTopicListenerException("No TopicListener is set");
         }
+    }
+    
+    public void subscribe(String... topics) throws NoTopicListenerException{
+        checkTopicListener();
         String key = StringUtil.concat(topics);
         ExecutorService es = topicServices.get(key);
         if(es == null){
@@ -91,9 +99,7 @@ public class Client {
     }
     
     public void subscribePattern(String... patterns) throws NoTopicListenerException{
-        if(topicListener == null){
-            throw new NoTopicListenerException("No TopicListener is set");
-        }
+        checkTopicListener();
         String key = StringUtil.concat(patterns);
         ExecutorService es = topicServices.get(key);
         if(es == null){
@@ -108,22 +114,18 @@ public class Client {
     }
     
     public void unsubscribe(String... topics) throws NoTopicListenerException{
-        if(topicListener == null){
-            throw new NoTopicListenerException("No TopicListener is set");
-        }
+        checkTopicListener();
         topicListener.unsubscribe(topics);
     }
     
     public void unsubscribePattern(String... patterns) throws NoTopicListenerException{
-        if(topicListener == null){
-            throw new NoTopicListenerException("No TopicListener is set");
-        }
+        checkTopicListener();
         topicListener.punsubscribe(patterns);
     }
     
     public long getSubsribersCount(String topic){
         Jedis jedis = pool.getResource();
-        long count = jedis.publish(topic, Message.EMPTY);
+        long count = jedis.publish(topic, MQ.EMPTY_MESSAGE);
         pool.returnResource(jedis);
         return count;
     }
@@ -309,6 +311,122 @@ public class Client {
     public void flushDB(){
         Jedis jedis = pool.getResource();
         jedis.flushDB();
+        pool.returnResource(jedis);
+    }
+    
+    public void listenFile(FileListener fileListener, String myClientId){
+        this.fileListener = fileListener;
+        this.myClientId = myClientId;
+        this.consume(new MyFileQueueListener(), MQ.FILE_CLIENT + myClientId);
+    }
+    
+    private void checkFileListener() throws NoFileListenerException{
+        if(fileListener == null){
+            throw new NoFileListenerException("No FileListener is set");
+        }
+    }
+    
+    class MyFileQueueListener extends QueueListener {
+        @Override
+        public void onQueueMessage(String queue, String message) {
+            if(StringUtil.isEmpty(message)){
+                return;
+            }
+            FileMessage fm = FileMessage.parse(message);
+            String fromClientId = fm.getFromClientId();
+            long fileId = fm.getFileId();
+            String messageType = fm.getMessageType();
+            String filePath = fm.getFilePath();
+            if(messageType!=null && messageType.equals(MQ.FILE_REQUEST_MESSAGE)){
+                fileListener.onRequest(fromClientId, fileId, filePath);
+            }
+            else if(messageType!=null && messageType.equals(MQ.FILE_AGREE_MESSAGE)){
+                fileListener.onAgree(fromClientId, fileId, filePath);
+            }
+            else if(messageType!=null && messageType.equals(MQ.FILE_REJECT_MESSAGE)){
+                fileListener.onReject(fromClientId, fileId, filePath);
+            }
+        }
+    }
+    
+    public void requestSendFile(String filePath, String toClientId) throws NoFileListenerException{
+        checkFileListener();
+        Jedis jedis = pool.getResource();
+        long count = jedis.incr(MQ.FILE_COUNT);
+        FileMessage fm = new FileMessage();
+        fm.setFromClientId(myClientId);
+        fm.setFileId(count);
+        fm.setMessageType(MQ.FILE_REQUEST_MESSAGE);
+        fm.setFilePath(filePath);
+        this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
+        pool.returnResource(jedis);
+    }
+    
+    public void sendFileData(long fileId, byte[] data) throws NoFileListenerException{
+        checkFileListener();
+        Jedis jedis = pool.getResource();
+        byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
+        jedis.lpush(queue, data);
+        pool.returnResource(jedis);
+    }
+    
+    public void sendEndOfFile(long fileId) throws NoFileListenerException{
+        checkFileListener();
+        Jedis jedis = pool.getResource();
+        byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
+        jedis.lpush(queue, MQ.EMPTY_MESSAGE.getBytes());
+        pool.returnResource(jedis);
+    }
+    
+    public void agreeReceiveFile(String toClientId, long fileId, String filePath) throws NoFileListenerException{
+        checkFileListener();
+        Jedis jedis = pool.getResource();
+        //send agree message
+        FileMessage fm = new FileMessage();
+        fm.setFromClientId(myClientId);
+        fm.setFileId(fileId);
+        fm.setMessageType(MQ.FILE_AGREE_MESSAGE);
+        fm.setFilePath(filePath);
+        this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
+        //consume che FILE_CHUNKS queue
+        boolean stopped = false;
+        byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
+        while(!stopped){
+            List<byte[]> list = null;
+            try{
+                list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
+            }catch(Exception ex){
+                //ignore ex
+            }
+            if(list!=null && list.size()==2){
+                byte[] data = list.get(1);
+                if(data.length != MQ.EMPTY_MESSAGE.length()){
+                    fileListener.onFileData(fileId, data);
+                }
+                else{
+                    String eof = new String(data);
+                    if(eof.equals(MQ.EMPTY_MESSAGE)){
+                        stopped = true;
+                    }else{
+                        fileListener.onFileData(fileId, data);
+                    }
+                }
+            }
+        }
+        fileListener.onFileEnd(fileId);
+        pool.returnResource(jedis);
+    }
+    
+    public void rejectReceiveFile(String toClientId, long fileId, String filePath) throws NoFileListenerException{
+        checkFileListener();
+        Jedis jedis = pool.getResource();
+        //send reject message;
+        FileMessage fm = new FileMessage();
+        fm.setFromClientId(myClientId);
+        fm.setFileId(fileId);
+        fm.setMessageType(MQ.FILE_REJECT_MESSAGE);
+        fm.setFilePath(filePath);
+        this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
         pool.returnResource(jedis);
     }
 
