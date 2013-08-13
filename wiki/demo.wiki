@@ -166,12 +166,12 @@ client.flushDB();
     
     class SendFileListener extends FileListener{
         @Override
-        public void onRequest(String fromClientId, long fileId, String filePath){
+        public void onRequest(String fromClientId, long fileId, String filePath, long fileLength){
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void onAgree(String fromClientId, long fileId, String filePath) {
+        public void onAgree(String fromClientId, long fileId, String filePath, long fileLength) {
             System.out.println(fromClientId + " 同意接收文件：" + filePath);
             //开始分块发送文件
             try{
@@ -196,7 +196,7 @@ client.flushDB();
         }
 
         @Override
-        public void onReject(String fromClientId, long fileId, String filePath) {
+        public void onReject(String fromClientId, long fileId, String filePath, long fileLength) {
             System.out.println(fromClientId + " 拒绝接收文件：" + filePath);
         }
 
@@ -226,12 +226,12 @@ client.flushDB();
         private FileOutputStream fos;
         
         @Override
-        public void onRequest(String fromClientId, long fileId, String filePath){
+        public void onRequest(String fromClientId, long fileId, String filePath, long fileLength){
             System.out.println(fromClientId + " 请求向您发送文件：" + filePath);
             //发送消息，同意接收文件
             Client client = Connection.getInstance().getClient();
             try{
-                client.agreeReceiveFile(fromClientId, fileId, filePath);
+                client.agreeReceiveFile(fromClientId, fileId, filePath, fileLength);
             }catch(Exception ex){
                 
             }
@@ -246,12 +246,12 @@ client.flushDB();
         }
 
         @Override
-        public void onAgree(String fromClientId, long fileId, String filePath) {
+        public void onAgree(String fromClientId, long fileId, String filePath, long fileLength) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
-        public void onReject(String fromClientId, long fileId, String filePath) {
+        public void onReject(String fromClientId, long fileId, String filePath, long fileLength) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
@@ -284,4 +284,4 @@ client.flushDB();
 
 （2）filePath是文件的绝对路径。
 
-（3）当有多个文件同时在传输的时候，需要用fileId进行区分。
+（3）当有多个文件同时在传输的时候，需要用fileId进行区分。fileId是由BuguMQ自动产生的、能唯一区分不同文件的long型数值。
