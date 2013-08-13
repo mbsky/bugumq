@@ -17,7 +17,8 @@
 package com.bugull.mq;
 
 /**
- *
+ * Listener to transfer files.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
 public abstract class FileListener {

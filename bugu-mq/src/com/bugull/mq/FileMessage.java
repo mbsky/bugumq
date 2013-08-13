@@ -17,7 +17,8 @@
 package com.bugull.mq;
 
 /**
- *
+ * Message used for transfer files.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
 public class FileMessage {

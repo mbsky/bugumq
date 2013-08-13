@@ -370,7 +370,7 @@ public class Client {
         this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
         pool.returnResource(jedis);
         //start a thread to receive file data
-        FileDataTask task = new FileDataTask(fileListener, pool, fileId);
+        GetFileDataTask task = new GetFileDataTask(fileListener, pool, fileId);
         new Thread(task).start();
     }
     
