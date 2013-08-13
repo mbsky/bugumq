@@ -149,18 +149,136 @@ client.flushDB();
 }}}
 
 ==文件传输==
+示例代码：
+
 发送方：
 {{{
+    public void send() throws Exception {
+        String myClientId = "sender_id";
+        client.listenFile(new SendFileListener(), myClientId);
+        
+        String filePath = "/Users/frankwen/send/redis.pdf";
+        String toClientId = "receiver_id";
+        client.requestSendFile(filePath, toClientId);
+    }
+    
+    class SendFileListener extends FileListener{
+        @Override
+        public void onRequest(String fromClientId, long fileId, String filePath){
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
 
+        @Override
+        public void onAgree(String fromClientId, long fileId, String filePath) {
+            System.out.println(fromClientId + " 同意接收文件：" + filePath);
+            //开始分块发送文件
+            try{
+                Client client = Connection.getInstance().getClient();
+                FileInputStream fis = new FileInputStream(filePath);
+                int chunkSize = 8 * 1024;
+                byte[] chunkData = new byte[chunkSize];
+                int bytesRead = fis.read(chunkData, 0, chunkSize);
+                while(bytesRead > 0){
+                    if(bytesRead == chunkSize){
+                        client.sendFileData(fileId, chunkData);
+                    }else{
+                        client.sendFileData(fileId, Arrays.copyOfRange(chunkData, 0, bytesRead));
+                    }
+                    bytesRead = fis.read(chunkData, 0, chunkSize);
+                }
+                //发送文件结束标识符
+                client.sendEndOfFile(fileId);
+            }catch(Exception ex){
+                
+            }
+        }
+
+        @Override
+        public void onReject(String fromClientId, long fileId, String filePath) {
+            System.out.println(fromClientId + " 拒绝接收文件：" + filePath);
+        }
+
+        @Override
+        public void onFileData(long fileId, byte[] data) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void onFileEnd(long fileId) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+        
+    }
 }}}
 
 接收方：
 {{{
+    public void receive() throws Exception {
+        String myClientId = "receiver_id";
+        client.listenFile(new ReceiveFileListener(), myClientId);
+    }
+    
+    class ReceiveFileListener extends FileListener{
+        
+        private FileOutputStream fos;
+        
+        @Override
+        public void onRequest(String fromClientId, long fileId, String filePath){
+            System.out.println(fromClientId + " 请求向您发送文件：" + filePath);
+            //发送消息，同意接收文件
+            Client client = Connection.getInstance().getClient();
+            try{
+                client.agreeReceiveFile(fromClientId, fileId, filePath);
+            }catch(Exception ex){
+                
+            }
+            //新建文件，并打开文件输出流
+            try{
+                File file = new File("/Users/frankwen/receive/new_file.pdf");
+                file.createNewFile();
+                fos = new FileOutputStream(file);
+            }catch(Exception ex){
+                
+            }
+        }
 
+        @Override
+        public void onAgree(String fromClientId, long fileId, String filePath) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void onReject(String fromClientId, long fileId, String filePath) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public void onFileData(long fileId, byte[] data) {
+            try{
+                fos.write(data);
+            }catch(Exception ex){
+                
+            }
+            
+        }
+
+        @Override
+        public void onFileEnd(long fileId) {
+            try{
+                fos.flush();
+                fos.close();
+            }catch(Exception ex){
+                
+            }
+        }
+        
+    }
 }}}
 
 *注意：*
 
-（1）filePath是文件的绝对路径。
+（1）clientId是能够唯一标识该客户端的字符串。
 
-（2）当有多个文件同时在传输的时候，需要用fileId进行区分。
+（2）filePath是文件的绝对路径。
+
+（3）当有多个文件同时在传输的时候，需要用fileId进行区分。
