@@ -149,6 +149,44 @@ client.flushDB();
 }}}
 
 ==文件传输==
+Client类提供了以下方法，用于文件传输：
+{{{
+//设置文件传输监听器
+public void listenFile(FileListener fileListener, String myClientId)
+
+//请求传输文件
+public void requestSendFile(String filePath, String toClientId)
+
+//同意接收文件
+public void agreeReceiveFile(String toClientId, long fileId, String filePath, long fileLength)
+
+//拒绝接收文件
+public void rejectReceiveFile(String toClientId, long fileId, String filePath, long fileLength)
+
+//发送文件数据
+public void sendFileData(long fileId, byte[] data)
+
+//发送文件结束标识符
+public void sendEndOfFile(long fileId)
+}}}
+其中，FileListener是一个监听器类，它是一个抽象类，包含5个抽象方法：
+{{{
+//对方请求传输文件
+public abstract void onRequest(String fromClientId, long fileId, String filePath, long fileLength);
+
+//对方同意接收文件    
+public abstract void onAgree(String fromClientId, long fileId, String filePath, long fileLength);
+
+//对方拒绝接收文件    
+public abstract void onReject(String fromClientId, long fileId, String filePath, long fileLength);
+
+//接收到文件数据    
+public abstract void onFileData(long fileId, byte[] data);
+
+//接收到文件传输结束的消息    
+public abstract void onFileEnd(long fileId);
+}}}
+
 示例代码：
 
 发送方：
