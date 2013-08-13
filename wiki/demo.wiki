@@ -217,6 +217,7 @@ client.flushDB();
 {{{
     public void receive() throws Exception {
         String myClientId = "receiver_id";
+        //监听文件传输
         client.listenFile(new ReceiveFileListener(), myClientId);
     }
     
