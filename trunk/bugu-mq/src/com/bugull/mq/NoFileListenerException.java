@@ -20,28 +20,10 @@ package com.bugull.mq;
  *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public final class StringUtil {
+public class NoFileListenerException extends Exception {
     
-    public static boolean isNull(String s){
-        return s==null || s.toLowerCase().equals("nil");
-    }
-    
-    public static boolean isEmpty(String s){
-        return s==null || s.equals("");
-    }
-    
-    /**
-     * Concat string array elements with comma
-     * @param arr
-     * @return 
-     */
-    public static String concat(String... arr){
-        StringBuilder sb = new StringBuilder();
-        for(String s : arr){
-            sb.append(s).append(",");
-        }
-        String result = sb.toString();
-        return result.substring(0, result.length()-1);
+    public NoFileListenerException(String message){
+        super(message);
     }
 
 }

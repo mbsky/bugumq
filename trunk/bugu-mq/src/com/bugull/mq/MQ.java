@@ -23,14 +23,34 @@ package com.bugull.mq;
  */
 public final class MQ {
     
+    //default value
     public static final int DEFAULT_PORT = 6379;
     public static final int DEFAULT_SO_TIMEOUT = 3000;
     public static final int DEFAULT_DATABASE = 0;
     
+    public static final int FILE_CHUNK_TIMEOUT = 10;  //10 seconds
+    
+    //for queue and topic
     public static final String MSG_COUNT = "msg:count";
     
     public static final String MSG_ID = "msg:id:";
     
     public static final String TOPIC = "topic:";
+    
+    //for file
+    public static final String FILE_CLIENT = "file:client:";
+    
+    public static final String FILE_COUNT = "file:count";
+    
+    public static final String FILE_CHUNKS = "file:chunks:";
+    
+    //for message
+    public static final String EMPTY_MESSAGE = "__EMPTY__";
+    
+    public static final String SPLIT_MESSAGE = "__##__";
+    
+    public static final String FILE_REQUEST_MESSAGE = "REQUEST";
+    public static final String FILE_AGREE_MESSAGE = "AGREE";
+    public static final String FILE_REJECT_MESSAGE = "REJECT";
 
 }

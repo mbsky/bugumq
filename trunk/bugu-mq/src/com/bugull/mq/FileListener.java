@@ -20,8 +20,16 @@ package com.bugull.mq;
  *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public final class Message {
+public abstract class FileListener {
     
-    public static final String EMPTY = "_EMPTY_";
+    public abstract void onRequest(String fromClientId, long fileId, String filePath);
+    
+    public abstract void onAgree(String fromClientId, long fileId, String filePath);
+    
+    public abstract void onReject(String fromClientId, long fileId, String filePath);
+    
+    public abstract void onFileData(long fileId, byte[] data);
+    
+    public abstract void onFileEnd(long fileId);
 
 }
