@@ -21,16 +21,17 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 /**
- *
+ * Thread to get file chunks data from redis.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class FileDataTask implements Runnable {
+public class GetFileDataTask implements Runnable {
     
     private FileListener fileListener;
     private JedisPool pool;
     private long fileId;
 
-    public FileDataTask(FileListener fileListener, JedisPool pool, long fileId) {
+    public GetFileDataTask(FileListener fileListener, JedisPool pool, long fileId) {
         this.fileListener = fileListener;
         this.pool = pool;
         this.fileId = fileId;

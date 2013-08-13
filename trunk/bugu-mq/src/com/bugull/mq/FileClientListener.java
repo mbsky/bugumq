@@ -17,7 +17,8 @@
 package com.bugull.mq;
 
 /**
- *
+ * A QueueListener used for transfer files.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
 public class FileClientListener extends QueueListener {
