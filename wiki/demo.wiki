@@ -155,10 +155,12 @@ client.flushDB();
 {{{
     public void send() throws Exception {
         String myClientId = "sender_id";
+        //监听文件传输
         client.listenFile(new SendFileListener(), myClientId);
         
         String filePath = "/Users/frankwen/send/redis.pdf";
         String toClientId = "receiver_id";
+        //请求传输文件给对方
         client.requestSendFile(filePath, toClientId);
     }
     
