@@ -185,6 +185,9 @@ public abstract void onFileData(long fileId, byte[] data);
 
 //接收到文件传输结束的消息    
 public abstract void onFileEnd(long fileId);
+
+//文件传输出错
+public abstract void onError(long fileId);
 }}}
 
 示例代码：
