@@ -169,7 +169,7 @@ public void sendFileData(long fileId, byte[] data)
 //发送文件结束标识符
 public void sendEndOfFile(long fileId)
 }}}
-其中，FileListener是一个监听器类，它是一个抽象类，包含5个抽象方法：
+其中，FileListener是一个监听器类，它是一个抽象类，包含如下几个抽象方法：
 {{{
 //对方请求传输文件
 public abstract void onRequest(String fromClientId, long fileId, String filePath, long fileLength);
@@ -303,7 +303,6 @@ public abstract void onError(long fileId);
             }catch(Exception ex){
                 
             }
-            
         }
 
         @Override
