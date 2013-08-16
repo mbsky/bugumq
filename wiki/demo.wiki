@@ -250,6 +250,11 @@ public abstract void onError(long fileId);
         public void onFileEnd(long fileId) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
+
+        @Override
+        public void onError(long fileId){
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
         
     }
 }}}
@@ -307,8 +312,19 @@ public abstract void onError(long fileId);
 
         @Override
         public void onFileEnd(long fileId) {
+            System.out.println("文件传输完成！");
             try{
                 fos.flush();
+                fos.close();
+            }catch(Exception ex){
+                
+            }
+        }
+
+        @Override
+        public void onError(long fileId){
+            System.out.println("文件传输出错！");
+            try{
                 fos.close();
             }catch(Exception ex){
                 
