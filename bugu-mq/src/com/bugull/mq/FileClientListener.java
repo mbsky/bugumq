@@ -37,17 +37,21 @@ public class FileClientListener extends QueueListener {
         FileMessage fm = FileMessage.parse(message);
         String fromClientId = fm.getFromClientId();
         long fileId = fm.getFileId();
-        String messageType = fm.getMessageType();
         String filePath = fm.getFilePath();
         long fileLength = fm.getFileLength();
-        if(messageType!=null && messageType.equals(MQ.FILE_REQUEST_MESSAGE)){
-            fileListener.onRequest(fromClientId, fileId, filePath, fileLength);
-        }
-        else if(messageType!=null && messageType.equals(MQ.FILE_AGREE_MESSAGE)){
-            fileListener.onAgree(fromClientId, fileId, filePath, fileLength);
-        }
-        else if(messageType!=null && messageType.equals(MQ.FILE_REJECT_MESSAGE)){
-            fileListener.onReject(fromClientId, fileId, filePath, fileLength);
+        int type = fm.getType();
+        switch(type){
+            case MQ.FILE_REQUEST:
+                fileListener.onRequest(fromClientId, fileId, filePath, fileLength);
+                break;
+            case MQ.FILE_AGREE:
+                fileListener.onAgree(fromClientId, fileId, filePath, fileLength);
+                break;
+            case MQ.FILE_REJECT:
+                fileListener.onReject(fromClientId, fileId, filePath, fileLength);
+                break;
+            default:
+                break;
         }
     }
 

@@ -28,13 +28,14 @@ public final class MQ {
     public static final int DEFAULT_SO_TIMEOUT = 3000;
     public static final int DEFAULT_DATABASE = 0;
     
-    public static final int FILE_CHUNK_TIMEOUT = 10;  //10 seconds
+    public static final int FILE_CHUNK_TIMEOUT = 30;  //30 seconds
     
-    //for queue and topic
+    //for queue
     public static final String MSG_COUNT = "msg:count";
     
     public static final String MSG_ID = "msg:id:";
     
+    //for topic
     public static final String TOPIC = "topic:";
     
     //for file
@@ -45,12 +46,12 @@ public final class MQ {
     public static final String FILE_CHUNKS = "file:chunks:";
     
     //for message
-    public static final String EMPTY_MESSAGE = "__EMPTY__";
+    public static final String EMPTY_MESSAGE = "_E_";
     
-    public static final String SPLIT_MESSAGE = "__##__";
+    public static final String SPLIT_MESSAGE = "_#_";
     
-    public static final String FILE_REQUEST_MESSAGE = "REQUEST";
-    public static final String FILE_AGREE_MESSAGE = "AGREE";
-    public static final String FILE_REJECT_MESSAGE = "REJECT";
+    public static final int FILE_REQUEST = 1;
+    public static final int FILE_AGREE = 2;
+    public static final int FILE_REJECT = 3;
 
 }

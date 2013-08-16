@@ -24,8 +24,8 @@ package com.bugull.mq;
 public class FileMessage {
     
     private String fromClientId;
+    private int type;
     private long fileId;
-    private String messageType;
     private String filePath;
     private long fileLength;
 
@@ -37,12 +37,12 @@ public class FileMessage {
         this.fileId = fileId;
     }
 
-    public String getMessageType() {
-        return messageType;
+    public int getType() {
+        return type;
     }
 
-    public void setMessageType(String messageType) {
-        this.messageType = messageType;
+    public void setType(int type) {
+        this.type = type;
     }
 
     public String getFilePath() {
@@ -73,8 +73,8 @@ public class FileMessage {
         String[] arr = s.split(MQ.SPLIT_MESSAGE);
         FileMessage fm = new FileMessage();
         fm.setFromClientId(arr[0]);
-        fm.setFileId(Long.parseLong(arr[1]));
-        fm.setMessageType(arr[2]);
+        fm.setType(Integer.parseInt(arr[1]));
+        fm.setFileId(Long.parseLong(arr[2]));
         fm.setFilePath(arr[3]);
         fm.setFileLength(Long.parseLong(arr[4]));
         return fm;
@@ -85,9 +85,9 @@ public class FileMessage {
         StringBuilder sb = new StringBuilder();
         sb.append(fromClientId);
         sb.append(MQ.SPLIT_MESSAGE);
-        sb.append(fileId);
+        sb.append(type);
         sb.append(MQ.SPLIT_MESSAGE);
-        sb.append(messageType);
+        sb.append(fileId);
         sb.append(MQ.SPLIT_MESSAGE);
         sb.append(filePath);
         sb.append(MQ.SPLIT_MESSAGE);

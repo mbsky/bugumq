@@ -47,7 +47,7 @@ public class GetFileDataTask implements Runnable {
             try{
                 list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
             }catch(Exception ex){
-                //ignore ex
+                ex.printStackTrace();
             }
             if(list!=null && list.size()==2){
                 byte[] data = list.get(1);
@@ -58,14 +58,18 @@ public class GetFileDataTask implements Runnable {
                     String eof = new String(data);
                     if(eof.equals(MQ.EMPTY_MESSAGE)){
                         stopped = true;
+                        fileListener.onFileEnd(fileId);
                     }else{
                         fileListener.onFileData(fileId, data);
                     }
                 }
             }
+            else{
+                stopped = true;
+                fileListener.onError(fileId);
+            }
             pool.returnResource(jedis);
         }
-        fileListener.onFileEnd(fileId);
     }
 
 }

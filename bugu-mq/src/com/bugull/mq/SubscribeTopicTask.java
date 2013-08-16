@@ -45,7 +45,7 @@ public class SubscribeTopicTask extends BlockedTask {
             //the subscribe method is blocked.
             j.subscribe(listener, topics);
         }catch(Exception ex){
-            //ignore the exception
+            ex.printStackTrace();
         }
         
         pool.returnResource(j);
