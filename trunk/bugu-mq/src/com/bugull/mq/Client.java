@@ -332,8 +332,8 @@ public class Client {
         long count = jedis.incr(MQ.FILE_COUNT);
         FileMessage fm = new FileMessage();
         fm.setFromClientId(myClientId);
+        fm.setType(MQ.FILE_REQUEST);
         fm.setFileId(count);
-        fm.setMessageType(MQ.FILE_REQUEST_MESSAGE);
         fm.setFilePath(filePath);
         File f = new File(filePath);
         fm.setFileLength(f.length());
@@ -341,16 +341,14 @@ public class Client {
         pool.returnResource(jedis);
     }
     
-    public void sendFileData(long fileId, byte[] data) throws NoFileListenerException{
-        checkFileListener();
+    public void sendFileData(long fileId, byte[] data) {
         Jedis jedis = pool.getResource();
         byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
         jedis.lpush(queue, data);
         pool.returnResource(jedis);
     }
     
-    public void sendEndOfFile(long fileId) throws NoFileListenerException{
-        checkFileListener();
+    public void sendEndOfFile(long fileId) {
         Jedis jedis = pool.getResource();
         byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
         jedis.lpush(queue, MQ.EMPTY_MESSAGE.getBytes());
@@ -363,8 +361,8 @@ public class Client {
         //send agree message
         FileMessage fm = new FileMessage();
         fm.setFromClientId(myClientId);
+        fm.setType(MQ.FILE_AGREE);
         fm.setFileId(fileId);
-        fm.setMessageType(MQ.FILE_AGREE_MESSAGE);
         fm.setFilePath(filePath);
         fm.setFileLength(fileLength);
         this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
@@ -380,8 +378,8 @@ public class Client {
         //send reject message;
         FileMessage fm = new FileMessage();
         fm.setFromClientId(myClientId);
+        fm.setType(MQ.FILE_REJECT);
         fm.setFileId(fileId);
-        fm.setMessageType(MQ.FILE_REJECT_MESSAGE);
         fm.setFilePath(filePath);
         fm.setFileLength(fileLength);
         this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());

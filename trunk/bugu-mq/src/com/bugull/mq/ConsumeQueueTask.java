@@ -48,7 +48,7 @@ public class ConsumeQueueTask extends BlockedTask {
             try{
                 list = j.brpop(0, queue);
             }catch(Exception ex){
-                //ignore the exception
+                ex.printStackTrace();
             }
             if(list!=null && list.size()==2){
                 String msgId = MQ.MSG_ID + list.get(1);

@@ -32,5 +32,7 @@ public abstract class FileListener {
     public abstract void onFileData(long fileId, byte[] data);
     
     public abstract void onFileEnd(long fileId);
+    
+    public abstract void onError(long fileId);
 
 }
