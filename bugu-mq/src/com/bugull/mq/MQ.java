@@ -50,6 +50,7 @@ public final class MQ {
     
     public static final String SPLIT_MESSAGE = "_#_";
     
+    //file message type
     public static final int FILE_REQUEST = 1;
     public static final int FILE_AGREE = 2;
     public static final int FILE_REJECT = 3;
