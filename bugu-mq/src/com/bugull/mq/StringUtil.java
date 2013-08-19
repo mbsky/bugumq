@@ -22,10 +22,20 @@ package com.bugull.mq;
  */
 public final class StringUtil {
     
+    /**
+     * is null message or not
+     * @param s
+     * @return 
+     */
     public static boolean isNull(String s){
         return s==null || s.toLowerCase().equals("nil");
     }
     
+    /**
+     * is empty string or not
+     * @param s
+     * @return 
+     */
     public static boolean isEmpty(String s){
         return s==null || s.equals("");
     }
