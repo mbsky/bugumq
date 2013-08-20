@@ -17,7 +17,9 @@
 package com.bugull.mq;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -25,7 +27,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Transaction;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
 
 /**
  * Presents an MQ client. All MQ operation is implemented here.
@@ -39,7 +42,6 @@ public class Client {
     private TopicListener topicListener;
     
     private FileListener fileListener;
-    private String myClientId;
     
     private final ConcurrentMap<String, ExecutorService> queueServices = new ConcurrentHashMap<String, ExecutorService>();
     private final ConcurrentMap<String, ExecutorService> topicServices = new ConcurrentHashMap<String, ExecutorService>();
@@ -59,10 +61,11 @@ public class Client {
     
     public void publishRetain(String topic, String message){
         Jedis jedis = pool.getResource();
-        Transaction tx = jedis.multi();
-        tx.publish(topic, message);
-        tx.set(MQ.TOPIC + topic, message);
-        tx.exec();
+        Pipeline p = jedis.pipelined();
+        p.multi();
+        p.publish(topic, message);
+        p.set(MQ.TOPIC + topic, message);
+        p.exec();
         pool.returnResource(jedis);
     }
     
@@ -77,14 +80,7 @@ public class Client {
         pool.returnResource(jedis);
     }
     
-    private void checkTopicListener() throws NoTopicListenerException{
-        if(topicListener == null){
-            throw new NoTopicListenerException("No TopicListener is set");
-        }
-    }
-    
-    public void subscribe(String... topics) throws NoTopicListenerException{
-        checkTopicListener();
+    public void subscribe(String... topics) {
         String key = StringUtil.concat(topics);
         ExecutorService es = topicServices.get(key);
         if(es == null){
@@ -98,8 +94,7 @@ public class Client {
         }
     }
     
-    public void subscribePattern(String... patterns) throws NoTopicListenerException{
-        checkTopicListener();
+    public void subscribePattern(String... patterns) {
         String key = StringUtil.concat(patterns);
         ExecutorService es = topicServices.get(key);
         if(es == null){
@@ -113,13 +108,11 @@ public class Client {
         }
     }
     
-    public void unsubscribe(String... topics) throws NoTopicListenerException{
-        checkTopicListener();
+    public void unsubscribe(String... topics) {
         topicListener.unsubscribe(topics);
     }
     
-    public void unsubscribePattern(String... patterns) throws NoTopicListenerException{
-        checkTopicListener();
+    public void unsubscribePattern(String... patterns) {
         topicListener.punsubscribe(patterns);
     }
     
@@ -136,10 +129,11 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.lpush(queue, id);
-            tx.set(msgId, msg);
-            tx.exec();
+            Pipeline p = jedis.pipelined();
+            p.multi();
+            p.lpush(queue, id);
+            p.set(msgId, msg);
+            p.exec();
         }
         pool.returnResource(jedis);
     }
@@ -150,11 +144,12 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.lpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expire(msgId, expire);
-            tx.exec();
+            Pipeline p = jedis.pipelined();
+            p.multi();
+            p.lpush(queue, id);
+            p.set(msgId, msg);
+            p.expire(msgId, expire);
+            p.exec();
         }
         pool.returnResource(jedis);
     }
@@ -165,11 +160,12 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.lpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expireAt(msgId, expireAt.getTime());
-            tx.exec();
+            Pipeline p = jedis.pipelined();
+            p.multi();
+            p.lpush(queue, id);
+            p.set(msgId, msg);
+            p.expireAt(msgId, expireAt.getTime());
+            p.exec();
         }
         pool.returnResource(jedis);
     }
@@ -180,10 +176,11 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.rpush(queue, id);
-            tx.set(msgId, msg);
-            tx.exec();
+            Pipeline p = jedis.pipelined();
+            p.multi();
+            p.rpush(queue, id);
+            p.set(msgId, msg);
+            p.exec();
         }
         pool.returnResource(jedis);
     }
@@ -194,11 +191,12 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.rpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expire(msgId, expire);
-            tx.exec();
+            Pipeline p = jedis.pipelined();
+            p.multi();
+            p.rpush(queue, id);
+            p.set(msgId, msg);
+            p.expire(msgId, expire);
+            p.exec();
         }
         pool.returnResource(jedis);
     }
@@ -209,11 +207,12 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.rpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expireAt(msgId, expireAt.getTime());
-            tx.exec();
+            Pipeline p = jedis.pipelined();
+            p.multi();
+            p.rpush(queue, id);
+            p.set(msgId, msg);
+            p.expireAt(msgId, expireAt.getTime());
+            p.exec();
         }
         pool.returnResource(jedis);
     }
@@ -303,9 +302,21 @@ public class Client {
         pool.returnResource(jedis);
         return size;
     }
-
-    public void setTopicListener(TopicListener topicListener) {
-        this.topicListener = topicListener;
+    
+    public List<Boolean> queryOnline(List<String> clientList){
+        Jedis jedis = pool.getResource();
+        List<Response<Boolean>> responseList = new ArrayList<Response<Boolean>>();
+        Pipeline p = jedis.pipelined();
+        for(String clientId : clientList){
+            responseList.add(p.exists(MQ.ONLINE + clientId));
+        }
+        p.sync();
+        List<Boolean> results = new ArrayList<Boolean>();
+        for(Response<Boolean> response : responseList){
+            results.add(response.get());
+        }
+        pool.returnResource(jedis);
+        return results;
     }
     
     public void flushDB(){
@@ -313,25 +324,22 @@ public class Client {
         jedis.flushDB();
         pool.returnResource(jedis);
     }
+
+    public void setTopicListener(TopicListener topicListener) {
+        this.topicListener = topicListener;
+    }
     
-    public void listenFile(FileListener fileListener, String myClientId){
+    public void setFileListener(FileListener fileListener){
         this.fileListener = fileListener;
-        this.myClientId = myClientId;
+        String myClientId = Connection.getInstance().getClientId();
         this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + myClientId);
     }
     
-    private void checkFileListener() throws NoFileListenerException{
-        if(fileListener == null){
-            throw new NoFileListenerException("No FileListener is set");
-        }
-    }
-    
-    public void requestSendFile(String filePath, String toClientId) throws NoFileListenerException{
-        checkFileListener();
+    public void requestSendFile(String filePath, String toClientId) {
         Jedis jedis = pool.getResource();
         long count = jedis.incr(MQ.FILE_COUNT);
         FileMessage fm = new FileMessage();
-        fm.setFromClientId(myClientId);
+        fm.setFromClientId(Connection.getInstance().getClientId());
         fm.setType(MQ.FILE_REQUEST);
         fm.setFileId(count);
         fm.setFilePath(filePath);
@@ -355,12 +363,11 @@ public class Client {
         pool.returnResource(jedis);
     }
     
-    public void agreeReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws NoFileListenerException{
-        checkFileListener();
+    public void agreeReceiveFile(String toClientId, long fileId, String filePath, long fileLength) {
         Jedis jedis = pool.getResource();
         //send agree message
         FileMessage fm = new FileMessage();
-        fm.setFromClientId(myClientId);
+        fm.setFromClientId(Connection.getInstance().getClientId());
         fm.setType(MQ.FILE_AGREE);
         fm.setFileId(fileId);
         fm.setFilePath(filePath);
@@ -372,12 +379,11 @@ public class Client {
         new Thread(task).start();
     }
     
-    public void rejectReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws NoFileListenerException{
-        checkFileListener();
+    public void rejectReceiveFile(String toClientId, long fileId, String filePath, long fileLength) {
         Jedis jedis = pool.getResource();
         //send reject message;
         FileMessage fm = new FileMessage();
-        fm.setFromClientId(myClientId);
+        fm.setFromClientId(Connection.getInstance().getClientId());
         fm.setType(MQ.FILE_REJECT);
         fm.setFileId(fileId);
         fm.setFilePath(filePath);

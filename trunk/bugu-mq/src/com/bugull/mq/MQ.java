@@ -38,6 +38,9 @@ public final class MQ {
     //for topic
     public static final String TOPIC = "topic:";
     
+    //for online:
+    public static final String ONLINE = "online:";
+    
     //for file
     public static final String FILE_CLIENT = "file:client:";
     
