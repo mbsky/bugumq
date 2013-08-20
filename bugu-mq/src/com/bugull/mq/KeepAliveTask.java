@@ -16,14 +16,28 @@
 
 package com.bugull.mq;
 
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Pipeline;
+
 /**
- *
+ * Sending online message in period.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class NoFileListenerException extends Exception {
-    
-    public NoFileListenerException(String message){
-        super(message);
+public class KeepAliveTask implements Runnable {
+
+    @Override
+    public void run() {
+        Connection conn = Connection.getInstance();
+        JedisPool pool = conn.getPool();
+        String key = MQ.ONLINE + conn.getClientId();
+        Jedis jedis = pool.getResource();
+        Pipeline p = jedis.pipelined();
+        p.multi();
+        p.set(key, "true");
+        p.expire(key, conn.getKeepAlive());
+        p.exec();
     }
 
 }

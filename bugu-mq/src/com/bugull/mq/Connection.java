@@ -16,6 +16,9 @@
 
 package com.bugull.mq;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -45,6 +48,10 @@ public class Connection {
     private int database = MQ.DEFAULT_DATABASE;
     private String password;
     
+    private String clientId;
+    private int keepAlive;  //time in seconds
+    private ScheduledExecutorService scheduler;  //scheduler to send online message
+    
     private static Connection instance = new Connection();
     
     private Connection(){
@@ -58,9 +65,16 @@ public class Connection {
     public void connect(){
         pool = new JedisPool(poolConfig, host, port, soTimeout, password, database);
         client = new Client(pool);
+        if(keepAlive > 0){
+            scheduler = Executors.newSingleThreadScheduledExecutor();
+            scheduler.scheduleAtFixedRate(new KeepAliveTask(), 1, keepAlive, TimeUnit.SECONDS);
+        }
     }
     
     public void disconnect(){
+        if(scheduler != null){
+            scheduler.shutdownNow();
+        }
         if(client != null){
             client.stopAllConsume();
             client.stopAllTopicTask();
@@ -100,6 +114,22 @@ public class Connection {
 
     public JedisPool getPool() {
         return pool;
+    }
+    
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setKeepAlive(int keepAlive) {
+        this.keepAlive = keepAlive;
+    }
+
+    public int getKeepAlive() {
+        return keepAlive;
     }
 
 }
