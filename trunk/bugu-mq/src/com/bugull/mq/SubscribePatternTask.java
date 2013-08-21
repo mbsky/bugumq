@@ -45,7 +45,7 @@ public class SubscribePatternTask extends BlockedTask {
             //the psubscribe method is blocked.
             j.psubscribe(listener, patterns);
         }catch(Exception ex){
-            //ignore the exception
+            //ignore the ex
         }
         
         pool.returnResource(j);

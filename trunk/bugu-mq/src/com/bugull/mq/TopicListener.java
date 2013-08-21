@@ -52,7 +52,7 @@ public abstract class TopicListener extends JedisPubSub {
         Connection conn = Connection.getInstance();
         JedisPool pool = conn.getPool();
         Jedis jedis = pool.getResource();
-        String retainMessage = jedis.get(MQ.TOPIC + channel);
+        String retainMessage = jedis.get(MQ.RETAIN + channel);
         if(!StringUtil.isNull(retainMessage)){
             synchronized(this){
                 onTopicMessage(channel, retainMessage);

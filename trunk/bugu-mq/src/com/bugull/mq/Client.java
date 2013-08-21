@@ -29,6 +29,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
+import redis.clients.jedis.Transaction;
 
 /**
  * Presents an MQ client. All MQ operation is implemented here.
@@ -61,11 +62,10 @@ public class Client {
     
     public void publishRetain(String topic, String message){
         Jedis jedis = pool.getResource();
-        Pipeline p = jedis.pipelined();
-        p.multi();
-        p.publish(topic, message);
-        p.set(MQ.TOPIC + topic, message);
-        p.exec();
+        Transaction tx = jedis.multi();
+        tx.publish(topic, message);
+        tx.set(MQ.RETAIN + topic, message);
+        tx.exec();
         pool.returnResource(jedis);
     }
     
@@ -73,7 +73,7 @@ public class Client {
         int len = topics.length;
         String[] keys = new String[len];
         for(int i=0; i< len; i++){
-            keys[i] = MQ.TOPIC + topics[i];
+            keys[i] = MQ.RETAIN + topics[i];
         }
         Jedis jedis = pool.getResource();
         jedis.del(keys);
@@ -129,11 +129,10 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Pipeline p = jedis.pipelined();
-            p.multi();
-            p.lpush(queue, id);
-            p.set(msgId, msg);
-            p.exec();
+            Transaction tx = jedis.multi();
+            tx.lpush(queue, id);
+            tx.set(msgId, msg);
+            tx.exec();
         }
         pool.returnResource(jedis);
     }
@@ -144,12 +143,11 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Pipeline p = jedis.pipelined();
-            p.multi();
-            p.lpush(queue, id);
-            p.set(msgId, msg);
-            p.expire(msgId, expire);
-            p.exec();
+            Transaction tx = jedis.multi();
+            tx.lpush(queue, id);
+            tx.set(msgId, msg);
+            tx.expire(msgId, expire);
+            tx.exec();
         }
         pool.returnResource(jedis);
     }
@@ -160,12 +158,11 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Pipeline p = jedis.pipelined();
-            p.multi();
-            p.lpush(queue, id);
-            p.set(msgId, msg);
-            p.expireAt(msgId, expireAt.getTime());
-            p.exec();
+            Transaction tx = jedis.multi();
+            tx.lpush(queue, id);
+            tx.set(msgId, msg);
+            tx.expireAt(msgId, expireAt.getTime());
+            tx.exec();
         }
         pool.returnResource(jedis);
     }
@@ -176,11 +173,10 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Pipeline p = jedis.pipelined();
-            p.multi();
-            p.rpush(queue, id);
-            p.set(msgId, msg);
-            p.exec();
+            Transaction tx = jedis.multi();
+            tx.rpush(queue, id);
+            tx.set(msgId, msg);
+            tx.exec();
         }
         pool.returnResource(jedis);
     }
@@ -191,12 +187,11 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Pipeline p = jedis.pipelined();
-            p.multi();
-            p.rpush(queue, id);
-            p.set(msgId, msg);
-            p.expire(msgId, expire);
-            p.exec();
+            Transaction tx = jedis.multi();
+            tx.rpush(queue, id);
+            tx.set(msgId, msg);
+            tx.expire(msgId, expire);
+            tx.exec();
         }
         pool.returnResource(jedis);
     }
@@ -207,12 +202,11 @@ public class Client {
             long count = jedis.incr(MQ.MSG_COUNT);
             String id = String.valueOf(count);
             String msgId = MQ.MSG_ID + id;
-            Pipeline p = jedis.pipelined();
-            p.multi();
-            p.rpush(queue, id);
-            p.set(msgId, msg);
-            p.expireAt(msgId, expireAt.getTime());
-            p.exec();
+            Transaction tx = jedis.multi();
+            tx.rpush(queue, id);
+            tx.set(msgId, msg);
+            tx.expireAt(msgId, expireAt.getTime());
+            tx.exec();
         }
         pool.returnResource(jedis);
     }
@@ -303,7 +297,14 @@ public class Client {
         return size;
     }
     
-    public List<Boolean> queryOnline(List<String> clientList){
+    public boolean isOnline(String clientId){
+        Jedis jedis = pool.getResource();
+        boolean result = jedis.exists(MQ.ONLINE + clientId);
+        pool.returnResource(jedis);
+        return result;
+    }
+    
+    public List<Boolean> isOnline(List<String> clientList){
         Jedis jedis = pool.getResource();
         List<Response<Boolean>> responseList = new ArrayList<Response<Boolean>>();
         Pipeline p = jedis.pipelined();
@@ -331,8 +332,7 @@ public class Client {
     
     public void setFileListener(FileListener fileListener){
         this.fileListener = fileListener;
-        String myClientId = Connection.getInstance().getClientId();
-        this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + myClientId);
+        this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + Connection.getInstance().getClientId());
     }
     
     public void requestSendFile(String filePath, String toClientId) {
@@ -363,12 +363,12 @@ public class Client {
         pool.returnResource(jedis);
     }
     
-    public void agreeReceiveFile(String toClientId, long fileId, String filePath, long fileLength) {
+    public void acceptReceiveFile(String toClientId, long fileId, String filePath, long fileLength) {
         Jedis jedis = pool.getResource();
         //send agree message
         FileMessage fm = new FileMessage();
         fm.setFromClientId(Connection.getInstance().getClientId());
-        fm.setType(MQ.FILE_AGREE);
+        fm.setType(MQ.FILE_ACCEPT);
         fm.setFileId(fileId);
         fm.setFilePath(filePath);
         fm.setFileLength(fileLength);

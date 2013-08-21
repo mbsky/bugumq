@@ -67,7 +67,7 @@ public class Connection {
         client = new Client(pool);
         if(keepAlive > 0){
             scheduler = Executors.newSingleThreadScheduledExecutor();
-            scheduler.scheduleAtFixedRate(new KeepAliveTask(), 1, keepAlive, TimeUnit.SECONDS);
+            scheduler.scheduleAtFixedRate(new KeepAliveTask(), 0, keepAlive, TimeUnit.SECONDS);
         }
     }
     
