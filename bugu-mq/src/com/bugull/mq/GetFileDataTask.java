@@ -47,7 +47,7 @@ public class GetFileDataTask implements Runnable {
             try{
                 list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
             }catch(Exception ex){
-                ex.printStackTrace();
+                //ignore the ex
             }
             if(list!=null && list.size()==2){
                 byte[] data = list.get(1);

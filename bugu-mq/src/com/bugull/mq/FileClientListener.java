@@ -44,8 +44,8 @@ public class FileClientListener extends QueueListener {
             case MQ.FILE_REQUEST:
                 fileListener.onRequest(fromClientId, fileId, filePath, fileLength);
                 break;
-            case MQ.FILE_AGREE:
-                fileListener.onAgree(fromClientId, fileId, filePath, fileLength);
+            case MQ.FILE_ACCEPT:
+                fileListener.onAccept(fromClientId, fileId, filePath, fileLength);
                 break;
             case MQ.FILE_REJECT:
                 fileListener.onReject(fromClientId, fileId, filePath, fileLength);

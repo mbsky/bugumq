@@ -36,9 +36,9 @@ public final class MQ {
     public static final String MSG_ID = "msg:id:";
     
     //for topic
-    public static final String TOPIC = "topic:";
+    public static final String RETAIN = "retain:";
     
-    //for online:
+    //for online
     public static final String ONLINE = "online:";
     
     //for file
@@ -55,7 +55,7 @@ public final class MQ {
     
     //file message type
     public static final int FILE_REQUEST = 1;
-    public static final int FILE_AGREE = 2;
+    public static final int FILE_ACCEPT = 2;
     public static final int FILE_REJECT = 3;
 
 }

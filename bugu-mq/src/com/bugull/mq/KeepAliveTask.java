@@ -18,7 +18,7 @@ package com.bugull.mq;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Transaction;
 
 /**
  * Sending online message in period.
@@ -32,12 +32,12 @@ public class KeepAliveTask implements Runnable {
         Connection conn = Connection.getInstance();
         JedisPool pool = conn.getPool();
         String key = MQ.ONLINE + conn.getClientId();
+        int seconds = (int)(conn.getKeepAlive() * 1.5F);
         Jedis jedis = pool.getResource();
-        Pipeline p = jedis.pipelined();
-        p.multi();
-        p.set(key, "true");
-        p.expire(key, conn.getKeepAlive());
-        p.exec();
+        Transaction tx = jedis.multi();
+        tx.set(key, "true");
+        tx.expire(key, seconds);
+        tx.exec();
     }
 
 }
