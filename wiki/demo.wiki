@@ -172,8 +172,3 @@ clientList.add("client_b");
 clientList.add("client_c");
 List<Boolean> onlineList = client.isOnline(clientList);
 }}}
-
-==清空MQ服务器中的所有数据==
-{{{
-client.flushDB();
-}}}
