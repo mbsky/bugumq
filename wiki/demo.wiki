@@ -146,9 +146,10 @@ client.unsubscribe("topic/1", "topic/2");
 long count = client.getSubsribersCount("topic/1");
 }}}
 
+==在线/不在线状态==
+
+
 ==清空MQ服务器中的所有消息==
 {{{
 client.flushDB();
 }}}
-
-==文件传输==
