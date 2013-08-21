@@ -2,6 +2,8 @@
 
 = BuguMQ的文件传输 =
 
+==方法说明==
+
 Client类提供了以下方法，用于文件传输：
 {{{
 //设置文件传输监听器
@@ -43,7 +45,7 @@ public abstract void onFileEnd(long fileId);
 public abstract void onError(long fileId);
 }}}
 
-示例代码：
+==示例代码==
 
 发送方：
 {{{
@@ -114,6 +116,7 @@ public abstract void onError(long fileId);
 接收方：
 {{{
     public void receive() throws Exception {
+        Client client = Connection.getInstance().getClient();
         client.setFileListener(new ReceiveFileListener());
     }
     
@@ -126,7 +129,7 @@ public abstract void onError(long fileId);
             System.out.println(fromClientId + " 请求向您发送文件：" + filePath);
             //发送消息，同意接收文件
             Client client = Connection.getInstance().getClient();
-            client.agreeReceiveFile(fromClientId, fileId, filePath, fileLength);
+            client.acceptReceiveFile(fromClientId, fileId, filePath, fileLength);
 
             //新建文件，并打开文件输出流
             try{
@@ -139,7 +142,7 @@ public abstract void onError(long fileId);
         }
 
         @Override
-        public void onAgree(String fromClientId, long fileId, String filePath, long fileLength) {
+        public void onAccept(String fromClientId, long fileId, String filePath, long fileLength) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
