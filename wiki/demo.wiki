@@ -7,8 +7,11 @@
 Connection conn = Connection.getInstance();
 conn.setHost("192.168.0.200");
 conn.setPassword("foobared");
+conn.setClientId("my_client_id");
 conn.connect();
 }}}
+
+其中，clientId是能够唯一标识该客户端的字符串。
 
 一个应用中，应该只有一个Connection，在应用开始的时候连接一次。在应用退出的时候，记得断开该连接：
 
