@@ -320,7 +320,7 @@ public class Client {
         return results;
     }
     
-    public void flushDB(){
+    public void clearAll(){
         Jedis jedis = pool.getResource();
         jedis.flushDB();
         pool.returnResource(jedis);
