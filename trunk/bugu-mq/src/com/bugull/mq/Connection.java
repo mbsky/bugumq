@@ -44,7 +44,7 @@ public class Connection {
     private JedisPoolConfig poolConfig = new JedisPoolConfig();
     private String host;
     private int port = MQ.DEFAULT_PORT;
-    private int soTimeout = MQ.DEFAULT_SO_TIMEOUT;
+    private int timeout = MQ.DEFAULT_TIMEOUT;
     private int database = MQ.DEFAULT_DATABASE;
     private String password;
     
@@ -63,7 +63,7 @@ public class Connection {
     }
     
     public void connect(){
-        pool = new JedisPool(poolConfig, host, port, soTimeout, password, database);
+        pool = new JedisPool(poolConfig, host, port, timeout, password, database);
         client = new Client(pool);
         if(keepAlive > 0){
             scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -100,8 +100,8 @@ public class Connection {
         this.port = port;
     }
 
-    public void setSoTimeout(int soTimeout) {
-        this.soTimeout = soTimeout;
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 
     public void setPassword(String password) {
