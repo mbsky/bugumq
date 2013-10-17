@@ -38,6 +38,7 @@ public class KeepAliveTask implements Runnable {
         tx.set(key, "true");
         tx.expire(key, seconds);
         tx.exec();
+        pool.returnResource(jedis);
     }
 
 }
