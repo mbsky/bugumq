@@ -28,7 +28,7 @@ public final class MQ {
     public static final int DEFAULT_TIMEOUT = 3000;
     public static final int DEFAULT_DATABASE = 0;
     
-    public static final int FILE_CHUNK_TIMEOUT = 30;  //30 seconds
+    public static final int FILE_CHUNK_TIMEOUT = 10;  //10 seconds
     
     //for queue
     public static final String MSG_COUNT = "msg:count";
@@ -42,11 +42,11 @@ public final class MQ {
     public static final String ONLINE = "online:";
     
     //for file
-    public static final String FILE_CLIENT = "file:client:";
+    public static final String FILE_CLIENT = "f:client:";
     
-    public static final String FILE_COUNT = "file:count";
+    public static final String FILE_COUNT = "f:count";
     
-    public static final String FILE_CHUNKS = "file:chunks:";
+    public static final String FILE_CHUNKS = "f:chunks:";
     
     //for message
     public static final String EMPTY_MESSAGE = "_E_";
