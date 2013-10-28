@@ -335,7 +335,7 @@ public class Client {
         this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + Connection.getInstance().getClientId());
     }
     
-    public void requestSendFile(String filePath, String toClientId) {
+    public void requestSendFile(String filePath, String toClientId, int timeout) {
         Jedis jedis = pool.getResource();
         long count = jedis.incr(MQ.FILE_COUNT);
         FileMessage fm = new FileMessage();
@@ -345,7 +345,7 @@ public class Client {
         fm.setFilePath(filePath);
         File f = new File(filePath);
         fm.setFileLength(f.length());
-        this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
+        this.produce(MQ.FILE_CLIENT + toClientId, timeout, fm.toString());
         pool.returnResource(jedis);
     }
     
