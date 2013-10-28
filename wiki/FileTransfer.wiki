@@ -58,7 +58,7 @@ public abstract void onError(long fileId);
         String filePath = "/Users/frankwen/send/redis.pdf";
         String toClientId = "receiver_id";
         //请求传输文件给对方
-        client.requestSendFile(filePath, toClientId, 60);
+        client.requestSendFile(filePath, toClientId, 60);  //该请求有效期为1分钟
     }
     
     class SendFileListener extends FileListener{
