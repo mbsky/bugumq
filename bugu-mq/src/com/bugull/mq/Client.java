@@ -335,7 +335,7 @@ public class Client {
         this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + Connection.getInstance().getClientId());
     }
     
-    public void requestSendFile(String filePath, String toClientId, int timeout) {
+    public void requestSendFile(String filePath, String toClientId) {
         Jedis jedis = pool.getResource();
         long count = jedis.incr(MQ.FILE_COUNT);
         FileMessage fm = new FileMessage();
@@ -345,7 +345,7 @@ public class Client {
         fm.setFilePath(filePath);
         File f = new File(filePath);
         fm.setFileLength(f.length());
-        this.produce(MQ.FILE_CLIENT + toClientId, timeout, fm.toString());
+        this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
         pool.returnResource(jedis);
     }
     
@@ -365,14 +365,14 @@ public class Client {
     
     public void acceptReceiveFile(String toClientId, long fileId, String filePath, long fileLength) {
         Jedis jedis = pool.getResource();
-        //send agree message
+        //send accept message
         FileMessage fm = new FileMessage();
         fm.setFromClientId(Connection.getInstance().getClientId());
         fm.setType(MQ.FILE_ACCEPT);
         fm.setFileId(fileId);
         fm.setFilePath(filePath);
         fm.setFileLength(fileLength);
-        this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
+        this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
         pool.returnResource(jedis);
         //start a thread to receive file data
         GetFileDataTask task = new GetFileDataTask(fileListener, pool, fileId);
@@ -388,7 +388,7 @@ public class Client {
         fm.setFileId(fileId);
         fm.setFilePath(filePath);
         fm.setFileLength(fileLength);
-        this.produce(MQ.FILE_CLIENT + toClientId, fm.toString());
+        this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
         pool.returnResource(jedis);
     }
 
