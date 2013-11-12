@@ -21,27 +21,18 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisException;
 
 /**
- * Sending online message in period.
- * 
+ *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class KeepAliveTask implements Runnable {
-
-    @Override
-    public void run() {
-        Connection conn = Connection.getInstance();
-        JedisPool pool = conn.getPool();
-        String key = MQ.ONLINE + conn.getClientId();
-        int seconds = (int)(conn.getKeepAlive() * 1.5F);
-        Jedis jedis = null;
+public final class JedisUtil {
+    
+    public static void returnToPool(JedisPool pool, Jedis jedis){
         try{
-            jedis = pool.getResource();
-            jedis.setex(key, seconds, "true");
+            pool.returnResource(jedis);
         }catch(JedisException ex){
             //ignore the ex
-        }finally{
-            JedisUtil.returnToPool(pool, jedis);
         }
+        
     }
 
 }

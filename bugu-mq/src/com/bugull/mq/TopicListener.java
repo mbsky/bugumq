@@ -19,6 +19,7 @@ package com.bugull.mq;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;
+import redis.clients.jedis.exceptions.JedisException;
 
 /**
  * Listener to receive topic message.
@@ -51,14 +52,20 @@ public abstract class TopicListener extends JedisPubSub {
     public void onSubscribe(String channel, int subscribedChannels){
         Connection conn = Connection.getInstance();
         JedisPool pool = conn.getPool();
-        Jedis jedis = pool.getResource();
-        String retainMessage = jedis.get(MQ.RETAIN + channel);
-        if(!StringUtil.isNull(retainMessage)){
-            synchronized(this){
-                onTopicMessage(channel, retainMessage);
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            String retainMessage = jedis.get(MQ.RETAIN + channel);
+            if(!StringUtil.isNull(retainMessage)){
+                synchronized(this){
+                    onTopicMessage(channel, retainMessage);
+                }
             }
+        }catch(JedisException ex){
+            //ignore the ex
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
     @Override
