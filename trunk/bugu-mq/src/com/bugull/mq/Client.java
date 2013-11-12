@@ -30,6 +30,7 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
+import redis.clients.jedis.exceptions.JedisException;
 
 /**
  * Presents an MQ client. All MQ operation is implemented here.
@@ -47,37 +48,55 @@ public class Client {
     private final ConcurrentMap<String, ExecutorService> queueServices = new ConcurrentHashMap<String, ExecutorService>();
     private final ConcurrentMap<String, ExecutorService> topicServices = new ConcurrentHashMap<String, ExecutorService>();
     
-    //store the blocked tasks, in order to close the jedis client.
+    //store the blocked tasks, in order to stop it and close the jedis client.
     private final ConcurrentMap<String, BlockedTask> blockedTasks = new ConcurrentHashMap<String, BlockedTask>();
     
     public Client(JedisPool pool){
         this.pool = pool;
     }
     
-    public void publish(String topic, String message){
-        Jedis jedis = pool.getResource();
-        jedis.publish(topic, message);
-        pool.returnResource(jedis);
+    public void publish(String topic, String message) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            jedis.publish(topic, message);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
     }
     
-    public void publishRetain(String topic, String message){
-        Jedis jedis = pool.getResource();
-        Transaction tx = jedis.multi();
-        tx.publish(topic, message);
-        tx.set(MQ.RETAIN + topic, message);
-        tx.exec();
-        pool.returnResource(jedis);
+    public void publishRetain(String topic, String message) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            Transaction tx = jedis.multi();
+            tx.publish(topic, message);
+            tx.set(MQ.RETAIN + topic, message);
+            tx.exec();
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
     }
     
-    public void clearRetainMessage(String... topics){
+    public void clearRetainMessage(String... topics) throws MQException {
         int len = topics.length;
         String[] keys = new String[len];
         for(int i=0; i< len; i++){
             keys[i] = MQ.RETAIN + topics[i];
         }
-        Jedis jedis = pool.getResource();
-        jedis.del(keys);
-        pool.returnResource(jedis);
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            jedis.del(keys);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
     }
     
     public void subscribe(String... topics) {
@@ -108,107 +127,158 @@ public class Client {
         }
     }
     
-    public void unsubscribe(String... topics) {
-        topicListener.unsubscribe(topics);
+    public void unsubscribe(String... topics) throws MQException {
+        try{
+            topicListener.unsubscribe(topics);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }
     }
     
-    public void unsubscribePattern(String... patterns) {
-        topicListener.punsubscribe(patterns);
+    public void unsubscribePattern(String... patterns) throws MQException {
+        try{
+            topicListener.punsubscribe(patterns);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }
     }
     
-    public long getSubsribersCount(String topic){
-        Jedis jedis = pool.getResource();
-        long count = jedis.publish(topic, MQ.EMPTY_MESSAGE);
-        pool.returnResource(jedis);
+    public long getSubsribersCount(String topic) throws MQException {
+        long count = 0;
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            count = jedis.publish(topic, MQ.EMPTY_MESSAGE);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
         return count;
     }
     
-    public void produce(String queue, String... messages){
-        Jedis jedis = pool.getResource();
-        for(String msg : messages){
-            long count = jedis.incr(MQ.MSG_COUNT);
-            String id = String.valueOf(count);
-            String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.lpush(queue, id);
-            tx.set(msgId, msg);
-            tx.exec();
+    public void produce(String queue, String... messages) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            for(String msg : messages){
+                long count = jedis.incr(MQ.MSG_COUNT);
+                String id = String.valueOf(count);
+                String msgId = MQ.MSG_ID + id;
+                Transaction tx = jedis.multi();
+                tx.lpush(queue, id);
+                tx.set(msgId, msg);
+                tx.exec();
+            }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
-    public void produce(String queue, int expire, String... messages){
-        Jedis jedis = pool.getResource();
-        for(String msg : messages){
-            long count = jedis.incr(MQ.MSG_COUNT);
-            String id = String.valueOf(count);
-            String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.lpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expire(msgId, expire);
-            tx.exec();
+    public void produce(String queue, int expire, String... messages) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            for(String msg : messages){
+                long count = jedis.incr(MQ.MSG_COUNT);
+                String id = String.valueOf(count);
+                String msgId = MQ.MSG_ID + id;
+                Transaction tx = jedis.multi();
+                tx.lpush(queue, id);
+                tx.set(msgId, msg);
+                tx.expire(msgId, expire);
+                tx.exec();
+            }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
-    public void produce(String queue, Date expireAt, String... messages){
-        Jedis jedis = pool.getResource();
-        for(String msg : messages){
-            long count = jedis.incr(MQ.MSG_COUNT);
-            String id = String.valueOf(count);
-            String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.lpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expireAt(msgId, expireAt.getTime());
-            tx.exec();
+    public void produce(String queue, Date expireAt, String... messages) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            for(String msg : messages){
+                long count = jedis.incr(MQ.MSG_COUNT);
+                String id = String.valueOf(count);
+                String msgId = MQ.MSG_ID + id;
+                Transaction tx = jedis.multi();
+                tx.lpush(queue, id);
+                tx.set(msgId, msg);
+                tx.expireAt(msgId, expireAt.getTime());
+                tx.exec();
+            }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
-    public void produceUrgency(String queue, String... messages){
-        Jedis jedis = pool.getResource();
-        for(String msg : messages){
-            long count = jedis.incr(MQ.MSG_COUNT);
-            String id = String.valueOf(count);
-            String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.rpush(queue, id);
-            tx.set(msgId, msg);
-            tx.exec();
+    public void produceUrgency(String queue, String... messages) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            for(String msg : messages){
+                long count = jedis.incr(MQ.MSG_COUNT);
+                String id = String.valueOf(count);
+                String msgId = MQ.MSG_ID + id;
+                Transaction tx = jedis.multi();
+                tx.rpush(queue, id);
+                tx.set(msgId, msg);
+                tx.exec();
+            }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
-    public void produceUrgency(String queue, int expire, String... messages){
-        Jedis jedis = pool.getResource();
-        for(String msg : messages){
-            long count = jedis.incr(MQ.MSG_COUNT);
-            String id = String.valueOf(count);
-            String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.rpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expire(msgId, expire);
-            tx.exec();
+    public void produceUrgency(String queue, int expire, String... messages) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            for(String msg : messages){
+                long count = jedis.incr(MQ.MSG_COUNT);
+                String id = String.valueOf(count);
+                String msgId = MQ.MSG_ID + id;
+                Transaction tx = jedis.multi();
+                tx.rpush(queue, id);
+                tx.set(msgId, msg);
+                tx.expire(msgId, expire);
+                tx.exec();
+            }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
-    public void produceUrgency(String queue, Date expireAt, String... messages){
-        Jedis jedis = pool.getResource();
-        for(String msg : messages){
-            long count = jedis.incr(MQ.MSG_COUNT);
-            String id = String.valueOf(count);
-            String msgId = MQ.MSG_ID + id;
-            Transaction tx = jedis.multi();
-            tx.rpush(queue, id);
-            tx.set(msgId, msg);
-            tx.expireAt(msgId, expireAt.getTime());
-            tx.exec();
+    public void produceUrgency(String queue, Date expireAt, String... messages) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            for(String msg : messages){
+                long count = jedis.incr(MQ.MSG_COUNT);
+                String id = String.valueOf(count);
+                String msgId = MQ.MSG_ID + id;
+                Transaction tx = jedis.multi();
+                tx.rpush(queue, id);
+                tx.set(msgId, msg);
+                tx.expireAt(msgId, expireAt.getTime());
+                tx.exec();
+            }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
     public void consume(QueueListener listener, String... queues){
@@ -254,76 +324,118 @@ public class Client {
         for(String topic : set){
             BlockedTask task = blockedTasks.get(topic);
             if(task != null){
+                task.setStopped(true);
                 task.getJedis().disconnect();
+                blockedTasks.remove(topic);
             }
             ExecutorService es = topicServices.get(topic);
             if(es != null){
                 es.shutdownNow();
+                topicServices.remove(topic);
             }
         }
     }
     
-    public void clearQueue(String... queues){
-        Jedis jedis = pool.getResource();
-        for(String queue : queues){
+    public void clearQueue(String... queues) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            for(String queue : queues){
+                long size = jedis.llen(queue);
+                for(long i=0; i<size; i++){
+                    String id = jedis.rpop(queue);
+                    if(!StringUtil.isNull(id)){
+                        jedis.del(MQ.MSG_ID + id);
+                    }
+                }
+            }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
+    }
+    
+    public void retainQueue(String queue, long retainSize) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
             long size = jedis.llen(queue);
-            for(long i=0; i<size; i++){
+            long count = size - retainSize;
+            for(long i=0; i<count; i++){
                 String id = jedis.rpop(queue);
                 if(!StringUtil.isNull(id)){
                     jedis.del(MQ.MSG_ID + id);
                 }
             }
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
     }
     
-    public void retainQueue(String queue, long retainSize){
-        Jedis jedis = pool.getResource();
-        long size = jedis.llen(queue);
-        long count = size - retainSize;
-        for(long i=0; i<count; i++){
-            String id = jedis.rpop(queue);
-            if(!StringUtil.isNull(id)){
-                jedis.del(MQ.MSG_ID + id);
-            }
+    public long getQueueSize(String queue) throws MQException {
+        long size = 0;
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            size = jedis.llen(queue);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        pool.returnResource(jedis);
-    }
-    
-    public long getQueueSize(String queue){
-        Jedis jedis = pool.getResource();
-        long size = jedis.llen(queue);
-        pool.returnResource(jedis);
         return size;
     }
     
-    public boolean isOnline(String clientId){
-        Jedis jedis = pool.getResource();
-        boolean result = jedis.exists(MQ.ONLINE + clientId);
-        pool.returnResource(jedis);
+    public boolean isOnline(String clientId) throws MQException {
+        boolean result = false;
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            result = jedis.exists(MQ.ONLINE + clientId);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
         return result;
     }
     
-    public List<Boolean> isOnline(List<String> clientList){
-        Jedis jedis = pool.getResource();
-        List<Response<Boolean>> responseList = new ArrayList<Response<Boolean>>();
-        Pipeline p = jedis.pipelined();
-        for(String clientId : clientList){
-            responseList.add(p.exists(MQ.ONLINE + clientId));
-        }
-        p.sync();
+    public List<Boolean> isOnline(List<String> clientList) throws MQException {
         List<Boolean> results = new ArrayList<Boolean>();
+        List<Response<Boolean>> responseList = new ArrayList<Response<Boolean>>();
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            responseList = new ArrayList<Response<Boolean>>();
+            Pipeline p = jedis.pipelined();
+            for(String clientId : clientList){
+                responseList.add(p.exists(MQ.ONLINE + clientId));
+            }
+            p.sync();
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
         for(Response<Boolean> response : responseList){
             results.add(response.get());
         }
-        pool.returnResource(jedis);
         return results;
     }
     
-    public void clearAll(){
-        Jedis jedis = pool.getResource();
-        jedis.flushDB();
-        pool.returnResource(jedis);
+    public void clearAll() throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            jedis.flushDB();
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
     }
 
     public void setTopicListener(TopicListener topicListener) {
@@ -335,36 +447,57 @@ public class Client {
         this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + Connection.getInstance().getClientId());
     }
     
-    public void requestSendFile(String filePath, String toClientId) {
-        Jedis jedis = pool.getResource();
-        long count = jedis.incr(MQ.FILE_COUNT);
-        FileMessage fm = new FileMessage();
-        fm.setFromClientId(Connection.getInstance().getClientId());
-        fm.setType(MQ.FILE_REQUEST);
-        fm.setFileId(count);
-        fm.setFilePath(filePath);
-        File f = new File(filePath);
-        fm.setFileLength(f.length());
-        this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
-        pool.returnResource(jedis);
+    public void requestSendFile(String filePath, String toClientId) throws MQException {
+        Jedis jedis = null;
+        long count = 0;
+        try{
+            jedis = pool.getResource();
+            count = jedis.incr(MQ.FILE_COUNT);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
+        //if count==0, exception is catched
+        if(count > 0){
+            FileMessage fm = new FileMessage();
+            fm.setFromClientId(Connection.getInstance().getClientId());
+            fm.setType(MQ.FILE_REQUEST);
+            fm.setFileId(count);
+            fm.setFilePath(filePath);
+            File f = new File(filePath);
+            fm.setFileLength(f.length());
+            this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
+        } 
     }
     
-    public void sendFileData(long fileId, byte[] data) {
-        Jedis jedis = pool.getResource();
-        byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
-        jedis.lpush(queue, data);
-        pool.returnResource(jedis);
+    public void sendFileData(long fileId, byte[] data) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
+            jedis.lpush(queue, data);
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
     }
     
-    public void sendEndOfFile(long fileId) {
-        Jedis jedis = pool.getResource();
-        byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
-        jedis.lpush(queue, MQ.EMPTY_MESSAGE.getBytes());
-        pool.returnResource(jedis);
+    public void sendEndOfFile(long fileId) throws MQException {
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
+            jedis.lpush(queue, MQ.EMPTY_MESSAGE.getBytes());
+        }catch(JedisException ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
     }
     
-    public void acceptReceiveFile(String toClientId, long fileId, String filePath, long fileLength) {
-        Jedis jedis = pool.getResource();
+    public void acceptReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws MQException {
         //send accept message
         FileMessage fm = new FileMessage();
         fm.setFromClientId(Connection.getInstance().getClientId());
@@ -373,14 +506,13 @@ public class Client {
         fm.setFilePath(filePath);
         fm.setFileLength(fileLength);
         this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
-        pool.returnResource(jedis);
+
         //start a thread to receive file data
         GetFileDataTask task = new GetFileDataTask(fileListener, pool, fileId);
         new Thread(task).start();
     }
     
-    public void rejectReceiveFile(String toClientId, long fileId, String filePath, long fileLength) {
-        Jedis jedis = pool.getResource();
+    public void rejectReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws MQException {
         //send reject message;
         FileMessage fm = new FileMessage();
         fm.setFromClientId(Connection.getInstance().getClientId());
@@ -389,7 +521,6 @@ public class Client {
         fm.setFilePath(filePath);
         fm.setFileLength(fileLength);
         this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
-        pool.returnResource(jedis);
     }
 
 }

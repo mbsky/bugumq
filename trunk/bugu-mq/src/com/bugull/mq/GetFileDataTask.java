@@ -42,33 +42,35 @@ public class GetFileDataTask implements Runnable {
         boolean stopped = false;
         byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
         while(!stopped){
-            Jedis jedis = pool.getResource();
-            List<byte[]> list = null;
+            Jedis jedis = null;
             try{
-                list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
-            }catch(Exception ex){
-                //ignore the ex
-            }
-            if(list!=null && list.size()==2){
-                byte[] data = list.get(1);
-                if(data.length != MQ.EMPTY_MESSAGE.length()){
-                    fileListener.onFileData(fileId, data);
-                }
-                else{
-                    String eof = new String(data);
-                    if(eof.equals(MQ.EMPTY_MESSAGE)){
-                        stopped = true;
-                        fileListener.onFileEnd(fileId);
-                    }else{
+                jedis = pool.getResource();
+                List<byte[]> list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
+                if(list!=null && list.size()==2){
+                    byte[] data = list.get(1);
+                    if(data.length != MQ.EMPTY_MESSAGE.length()){
                         fileListener.onFileData(fileId, data);
                     }
+                    else{
+                        String eof = new String(data);
+                        if(eof.equals(MQ.EMPTY_MESSAGE)){
+                            stopped = true;
+                            fileListener.onFileEnd(fileId);
+                        }else{
+                            fileListener.onFileData(fileId, data);
+                        }
+                    }
                 }
-            }
-            else{
+                else{
+                    stopped = true;
+                    fileListener.onError(fileId);
+                }
+            }catch(Exception ex){
                 stopped = true;
                 fileListener.onError(fileId);
+            }finally{
+                JedisUtil.returnToPool(pool, jedis);
             }
-            pool.returnResource(jedis);
         }
     }
 

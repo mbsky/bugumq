@@ -17,7 +17,6 @@
 package com.bugull.mq;
 
 import java.util.List;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 /**
@@ -40,28 +39,25 @@ public class ConsumeQueueTask extends BlockedTask {
     @Override
     public void run() {
         while(!stopped){
-            Jedis j = pool.getResource();
-            this.jedis = j;
-            
-            List<String> list = null;
-            //block until get a message
             try{
-                list = j.brpop(0, queue);
-            }catch(Exception ex){
-                //ignore the ex
-            }
-            if(list!=null && list.size()==2){
-                String msgId = MQ.MSG_ID + list.get(1);
-                String msg = j.get(msgId);
-                if(!StringUtil.isNull(msg)){
-                    j.del(msgId);
-                    synchronized(listener){
-                        listener.onQueueMessage(queue, msg);
+                jedis = pool.getResource();
+                //block until get a message
+                List<String> list = jedis.brpop(0, queue);
+                if(list!=null && list.size()==2){
+                    String msgId = MQ.MSG_ID + list.get(1);
+                    String msg = jedis.get(msgId);
+                    if(!StringUtil.isNull(msg)){
+                        jedis.del(msgId);
+                        synchronized(listener){
+                            listener.onQueueMessage(queue, msg);
+                        }
                     }
                 }
+            }catch(Exception ex){
+                //ignore the ex
+            }finally{
+                JedisUtil.returnToPool(pool, jedis);
             }
-            
-            pool.returnResource(j);
         }
     }
 

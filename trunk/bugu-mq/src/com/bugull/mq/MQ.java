@@ -25,7 +25,7 @@ public final class MQ {
     
     //default value
     public static final int DEFAULT_PORT = 6379;
-    public static final int DEFAULT_TIMEOUT = 3000;
+    public static final int DEFAULT_TIMEOUT = 5000;  //5 seconds
     public static final int DEFAULT_DATABASE = 0;
     
     public static final int FILE_MSG_TIMEOUT = 60;  //in seconds

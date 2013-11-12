@@ -16,7 +16,6 @@
 
 package com.bugull.mq;
 
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 /**
@@ -38,17 +37,20 @@ public class SubscribeTopicTask extends BlockedTask {
 
     @Override
     public void run() {
-        Jedis j = pool.getResource();
-        this.jedis = j;
-        
-        try{
-            //the subscribe method is blocked.
-            j.subscribe(listener, topics);
-        }catch(Exception ex){
-            //ignore the ex
+        while(!stopped){
+            try{
+                jedis = pool.getResource();
+                //the subscribe method is blocked.
+                jedis.subscribe(listener, topics);
+                //if come here, shows that all topics have been unsubscirbed.
+                stopped = true;
+            }catch(Exception ex){
+                //ignore the ex
+            }finally{
+                JedisUtil.returnToPool(pool, jedis);
+            }
         }
         
-        pool.returnResource(j);
     }
 
 }
