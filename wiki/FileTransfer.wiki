@@ -12,7 +12,7 @@ Client类提供了以下方法，用于文件传输：
 public void setFileListener(FileListener fileListener)
 
 //请求传输文件
-public void requestSendFile(String filePath, String toClientId, int timeout)
+public void requestSendFile(String filePath, String toClientId)
 
 //同意接收文件
 public void acceptReceiveFile(String toClientId, long fileId, String filePath, long fileLength)
@@ -58,7 +58,7 @@ public abstract void onError(long fileId);
         String filePath = "/Users/frankwen/send/redis.pdf";
         String toClientId = "receiver_id";
         //请求传输文件给对方
-        client.requestSendFile(filePath, toClientId, 60);  //该请求有效期为1分钟
+        client.requestSendFile(filePath, toClientId);
     }
     
     class SendFileListener extends FileListener{
