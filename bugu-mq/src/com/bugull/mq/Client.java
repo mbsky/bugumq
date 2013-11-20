@@ -60,6 +60,8 @@ public class Client {
             jedis = pool.getResource();
             jedis.publish(topic, message);
         }catch(Exception ex){
+            //Note: catch Exception here, because there are many runtime exception in Jedis.
+            //Following code is same like this.
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
