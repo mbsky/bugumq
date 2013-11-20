@@ -30,7 +30,6 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
-import redis.clients.jedis.exceptions.JedisException;
 
 /**
  * Presents an MQ client. All MQ operation is implemented here.
@@ -60,7 +59,7 @@ public class Client {
         try{
             jedis = pool.getResource();
             jedis.publish(topic, message);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -75,7 +74,7 @@ public class Client {
             tx.publish(topic, message);
             tx.set(MQ.RETAIN + topic, message);
             tx.exec();
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -92,7 +91,7 @@ public class Client {
         try{
             jedis = pool.getResource();
             jedis.del(keys);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -130,7 +129,7 @@ public class Client {
     public void unsubscribe(String... topics) throws MQException {
         try{
             topicListener.unsubscribe(topics);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }
     }
@@ -138,7 +137,7 @@ public class Client {
     public void unsubscribePattern(String... patterns) throws MQException {
         try{
             topicListener.punsubscribe(patterns);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }
     }
@@ -149,7 +148,7 @@ public class Client {
         try{
             jedis = pool.getResource();
             count = jedis.publish(topic, MQ.EMPTY_MESSAGE);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -170,7 +169,7 @@ public class Client {
                 tx.set(msgId, msg);
                 tx.exec();
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -191,7 +190,7 @@ public class Client {
                 tx.expire(msgId, expire);
                 tx.exec();
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -212,7 +211,7 @@ public class Client {
                 tx.expireAt(msgId, expireAt.getTime());
                 tx.exec();
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -232,7 +231,7 @@ public class Client {
                 tx.set(msgId, msg);
                 tx.exec();
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -253,7 +252,7 @@ public class Client {
                 tx.expire(msgId, expire);
                 tx.exec();
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -274,7 +273,7 @@ public class Client {
                 tx.expireAt(msgId, expireAt.getTime());
                 tx.exec();
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -349,7 +348,7 @@ public class Client {
                     }
                 }
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -368,7 +367,7 @@ public class Client {
                     jedis.del(MQ.MSG_ID + id);
                 }
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -381,7 +380,7 @@ public class Client {
         try{
             jedis = pool.getResource();
             size = jedis.llen(queue);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -395,7 +394,7 @@ public class Client {
         try{
             jedis = pool.getResource();
             result = jedis.exists(MQ.ONLINE + clientId);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -415,7 +414,7 @@ public class Client {
                 responseList.add(p.exists(MQ.ONLINE + clientId));
             }
             p.sync();
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -431,7 +430,7 @@ public class Client {
         try{
             jedis = pool.getResource();
             jedis.flushDB();
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -453,7 +452,7 @@ public class Client {
         try{
             jedis = pool.getResource();
             count = jedis.incr(MQ.FILE_COUNT);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -477,7 +476,7 @@ public class Client {
             jedis = pool.getResource();
             byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
             jedis.lpush(queue, data);
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
@@ -490,7 +489,7 @@ public class Client {
             jedis = pool.getResource();
             byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
             jedis.lpush(queue, MQ.EMPTY_MESSAGE.getBytes());
-        }catch(JedisException ex){
+        }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
