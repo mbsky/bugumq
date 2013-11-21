@@ -28,7 +28,7 @@ public final class StringUtil {
      * @return 
      */
     public static boolean isNull(String s){
-        return s==null || s.toLowerCase().equals("nil");
+        return s==null || s.toLowerCase().equals(MQ.NIL_MESSAGE);
     }
     
     /**

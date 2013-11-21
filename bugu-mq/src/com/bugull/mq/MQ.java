@@ -50,6 +50,8 @@ public final class MQ {
     public static final String FILE_CHUNKS = "f:chunks:";
     
     //for message
+    public static final String NIL_MESSAGE = "nil";
+    
     public static final String EMPTY_MESSAGE = "_E_";
     
     public static final String SPLIT_MESSAGE = "_#_";
