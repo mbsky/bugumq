@@ -16,6 +16,8 @@
 
 package com.bugull.mq;
 
+import java.util.Map;
+
 /**
  * Listener to transfer files.
  * 
@@ -23,11 +25,11 @@ package com.bugull.mq;
  */
 public abstract class FileListener {
     
-    public abstract void onRequest(String fromClientId, long fileId, String filePath, long fileLength);
+    public abstract void onRequest(String fromClientId, long fileId, Map<String,String> extras);
     
-    public abstract void onAccept(String fromClientId, long fileId, String filePath, long fileLength);
+    public abstract void onAccept(String fromClientId, long fileId, Map<String,String> extras);
     
-    public abstract void onReject(String fromClientId, long fileId, String filePath, long fileLength);
+    public abstract void onReject(String fromClientId, long fileId, Map<String,String> extras);
     
     public abstract void onFileData(long fileId, byte[] data);
     

@@ -53,6 +53,7 @@ public final class MQ {
     public static final String EMPTY_MESSAGE = "_E_";
     
     public static final String SPLIT_MESSAGE = "_#_";
+    public static final String SPLIT_EXTRA = "_:_";
     
     //file message type
     public static final int FILE_REQUEST = 1;
