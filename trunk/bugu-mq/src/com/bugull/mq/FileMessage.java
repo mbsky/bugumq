@@ -16,6 +16,11 @@
 
 package com.bugull.mq;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 /**
  * Message used for transfer files.
  * 
@@ -26,8 +31,7 @@ public class FileMessage {
     private String fromClientId;
     private int type;
     private long fileId;
-    private String filePath;
-    private long fileLength;
+    private Map<String, String> extras;
 
     public long getFileId() {
         return fileId;
@@ -45,14 +49,6 @@ public class FileMessage {
         this.type = type;
     }
 
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
     public String getFromClientId() {
         return fromClientId;
     }
@@ -61,12 +57,12 @@ public class FileMessage {
         this.fromClientId = fromClientId;
     }
 
-    public long getFileLength() {
-        return fileLength;
+    public Map<String, String> getExtras() {
+        return extras;
     }
 
-    public void setFileLength(long fileLength) {
-        this.fileLength = fileLength;
+    public void setExtras(Map<String, String> extras) {
+        this.extras = extras;
     }
     
     public static FileMessage parse(String s){
@@ -75,8 +71,13 @@ public class FileMessage {
         fm.setFromClientId(arr[0]);
         fm.setType(Integer.parseInt(arr[1]));
         fm.setFileId(Long.parseLong(arr[2]));
-        fm.setFilePath(arr[3]);
-        fm.setFileLength(Long.parseLong(arr[4]));
+        Map<String, String> map = new HashMap<String, String>();
+        for(int i=3; i<arr.length; i++){
+            String extra = arr[i];
+            String[] kv = extra.split(MQ.SPLIT_EXTRA);
+            map.put(kv[0], kv[1]);
+        }
+        fm.setExtras(map);
         return fm;
     }
     
@@ -89,10 +90,15 @@ public class FileMessage {
         sb.append(MQ.SPLIT_MESSAGE);
         sb.append(fileId);
         sb.append(MQ.SPLIT_MESSAGE);
-        sb.append(filePath);
-        sb.append(MQ.SPLIT_MESSAGE);
-        sb.append(fileLength);
-        return sb.toString();
+        if(extras != null){
+            Set<Entry<String, String>> set = extras.entrySet();
+            for(Entry<String, String> entry : set){
+                sb.append(entry.getKey()).append(MQ.SPLIT_EXTRA).append(entry.getValue());
+                sb.append(MQ.SPLIT_MESSAGE);
+            }
+        }
+        String s = sb.toString();
+        return s.substring(0, s.length() - MQ.SPLIT_MESSAGE.length());
     }
 
 }

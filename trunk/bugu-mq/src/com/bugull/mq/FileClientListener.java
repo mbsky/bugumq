@@ -16,6 +16,8 @@
 
 package com.bugull.mq;
 
+import java.util.Map;
+
 /**
  * A QueueListener used for transfer files.
  * 
@@ -37,18 +39,17 @@ public class FileClientListener extends QueueListener {
         FileMessage fm = FileMessage.parse(message);
         String fromClientId = fm.getFromClientId();
         long fileId = fm.getFileId();
-        String filePath = fm.getFilePath();
-        long fileLength = fm.getFileLength();
+        Map<String,String> extras = fm.getExtras();
         int type = fm.getType();
         switch(type){
             case MQ.FILE_REQUEST:
-                fileListener.onRequest(fromClientId, fileId, filePath, fileLength);
+                fileListener.onRequest(fromClientId, fileId, extras);
                 break;
             case MQ.FILE_ACCEPT:
-                fileListener.onAccept(fromClientId, fileId, filePath, fileLength);
+                fileListener.onAccept(fromClientId, fileId, extras);
                 break;
             case MQ.FILE_REJECT:
-                fileListener.onReject(fromClientId, fileId, filePath, fileLength);
+                fileListener.onReject(fromClientId, fileId, extras);
                 break;
             default:
                 break;

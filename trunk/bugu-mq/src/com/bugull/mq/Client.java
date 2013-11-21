@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -448,7 +449,7 @@ public class Client {
         this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + Connection.getInstance().getClientId());
     }
     
-    public void requestSendFile(String filePath, String toClientId) throws MQException {
+    public void requestSendFile(String toClientId, Map<String, String> extras) throws MQException {
         Jedis jedis = null;
         long count = 0;
         try{
@@ -465,9 +466,7 @@ public class Client {
             fm.setFromClientId(Connection.getInstance().getClientId());
             fm.setType(MQ.FILE_REQUEST);
             fm.setFileId(count);
-            fm.setFilePath(filePath);
-            File f = new File(filePath);
-            fm.setFileLength(f.length());
+            fm.setExtras(extras);
             this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
         } 
     }
@@ -498,14 +497,13 @@ public class Client {
         }
     }
     
-    public void acceptReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws MQException {
+    public void acceptReceiveFile(String toClientId, long fileId, Map<String, String> extras) throws MQException {
         //send accept message
         FileMessage fm = new FileMessage();
         fm.setFromClientId(Connection.getInstance().getClientId());
         fm.setType(MQ.FILE_ACCEPT);
         fm.setFileId(fileId);
-        fm.setFilePath(filePath);
-        fm.setFileLength(fileLength);
+        fm.setExtras(extras);
         this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
 
         //start a thread to receive file data
@@ -513,14 +511,13 @@ public class Client {
         new Thread(task).start();
     }
     
-    public void rejectReceiveFile(String toClientId, long fileId, String filePath, long fileLength) throws MQException {
+    public void rejectReceiveFile(String toClientId, long fileId, Map<String, String> extras) throws MQException {
         //send reject message;
         FileMessage fm = new FileMessage();
         fm.setFromClientId(Connection.getInstance().getClientId());
         fm.setType(MQ.FILE_REJECT);
         fm.setFileId(fileId);
-        fm.setFilePath(filePath);
-        fm.setFileLength(fileLength);
+        fm.setExtras(extras);
         this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
     }
 
