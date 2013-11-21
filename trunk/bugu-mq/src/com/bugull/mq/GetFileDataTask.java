@@ -53,8 +53,8 @@ public class GetFileDataTask implements Runnable {
                             fileListener.onFileData(fileId, data);
                         }
                         else{
-                            String eof = new String(data);
-                            if(eof.equals(MQ.EMPTY_MESSAGE)){
+                            String eof = new String(data).toLowerCase();
+                            if(eof.equals(MQ.EMPTY_MESSAGE) || eof.equals(MQ.NIL_MESSAGE)){
                                 stopped = true;
                                 fileListener.onFileEnd(fileId);
                             }else{
