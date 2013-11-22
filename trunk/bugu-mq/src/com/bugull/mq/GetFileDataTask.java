@@ -41,8 +41,8 @@ public class GetFileDataTask implements Runnable {
     public void run() {
         boolean stopped = false;
         byte[] queue = (MQ.FILE_CHUNKS + fileId).getBytes();
+        Jedis jedis = null;
         while(!stopped){
-            Jedis jedis = null;
             try{
                 jedis = pool.getResource();
                 List<byte[]> list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
@@ -53,8 +53,8 @@ public class GetFileDataTask implements Runnable {
                             fileListener.onFileData(fileId, data);
                         }
                         else{
-                            String eof = new String(data).toLowerCase();
-                            if(eof.equals(MQ.EMPTY_MESSAGE) || eof.equals(MQ.NIL_MESSAGE)){
+                            String eof = new String(data);
+                            if(eof.equals(MQ.EMPTY_MESSAGE)){
                                 stopped = true;
                                 fileListener.onFileEnd(fileId);
                             }else{
@@ -75,6 +75,16 @@ public class GetFileDataTask implements Runnable {
             }finally{
                 JedisUtil.returnToPool(pool, jedis);
             }
+        }//end of while
+        
+        //delete the queue
+        try{
+            jedis = pool.getResource();
+            jedis.del(queue);
+        }catch(Exception ex){
+            //ignore the ex
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
     }
 
