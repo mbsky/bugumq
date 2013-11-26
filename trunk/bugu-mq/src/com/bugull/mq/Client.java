@@ -303,7 +303,11 @@ public class Client {
             BlockedTask task = blockedTasks.get(queue);
             if(task != null){
                 task.setStopped(true);
-                task.getJedis().disconnect();
+                try{
+                    task.getJedis().disconnect();
+                }catch(Exception ex){
+                    //ignore ex
+                }
                 blockedTasks.remove(queue);
             }
             ExecutorService es = queueServices.get(queue);
@@ -327,7 +331,11 @@ public class Client {
             BlockedTask task = blockedTasks.get(topic);
             if(task != null){
                 task.setStopped(true);
-                task.getJedis().disconnect();
+                try{
+                    task.getJedis().disconnect();
+                }catch(Exception ex){
+                    //ignore ex
+                }
                 blockedTasks.remove(topic);
             }
             ExecutorService es = topicServices.get(topic);

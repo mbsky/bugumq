@@ -77,7 +77,7 @@ public class GetFileDataTask implements Runnable {
             }
         }//end of while
         
-        //delete the queue
+        //delete the temporary queue
         try{
             jedis = pool.getResource();
             jedis.del(queue);
