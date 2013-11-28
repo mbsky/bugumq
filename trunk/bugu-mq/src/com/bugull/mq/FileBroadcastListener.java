@@ -17,12 +17,25 @@
 package com.bugull.mq;
 
 /**
- * Listener to receive queue message.
- * 
+ *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public abstract class QueueListener {
+public abstract class FileBroadcastListener extends BinaryTopicListener {
     
-    public abstract void onQueueMessage(String queue, String message);
+    public abstract void onFileStart(long fileId);
+    
+    public abstract void onFileEnd(long fileId);
+    
+    public abstract void onFileData(long fileId, byte[] data);
+    
+    public abstract void onError(long fileId);
+
+    @Override
+    public void onBinaryMessage(String topic, byte[] message) {
+        if(!topic.equals(MQ.FILE_BROADCAST) || message.length <5){
+            return;
+        }
+        
+    }
 
 }
