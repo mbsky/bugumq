@@ -16,6 +16,8 @@
 
 package com.bugull.mq;
 
+import java.util.Arrays;
+
 /**
  *
  * @author Frank Wen(xbwen@hotmail.com)
@@ -27,15 +29,23 @@ public abstract class FileBroadcastListener extends BinaryTopicListener {
     public abstract void onFileEnd(long fileId);
     
     public abstract void onFileData(long fileId, byte[] data);
-    
-    public abstract void onError(long fileId);
 
     @Override
     public void onBinaryMessage(String topic, byte[] message) {
-        if(!topic.equals(MQ.FILE_BROADCAST) || message.length <5){
+        if(!topic.equals(MQ.FILE_BROADCAST) || message.length <9){
             return;
         }
-        
+        long fileId = ByteUtil.toLong(Arrays.copyOf(message, 8));
+        byte type = message[8];
+        if(type==MQ.BROADCAST_START){
+            onFileStart(fileId);
+        }
+        else if(type==MQ.BROADCAST_END){
+            onFileEnd(fileId);
+        }
+        else if(type==MQ.BROADCAST_DATA){
+            onFileData(fileId, Arrays.copyOfRange(message, 9, message.length));
+        }
     }
 
 }
