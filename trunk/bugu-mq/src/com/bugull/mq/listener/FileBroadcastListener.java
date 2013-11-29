@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.listener;
 
-import java.util.Arrays;
+import com.bugull.mq.message.FileBroadcastMessage;
+import com.bugull.mq.MQ;
+import com.bugull.mq.listener.BinaryTopicListener;
+import java.util.Map;
 
 /**
  *
@@ -24,27 +27,28 @@ import java.util.Arrays;
  */
 public abstract class FileBroadcastListener extends BinaryTopicListener {
     
-    public abstract void onFileStart(long fileId);
+    public abstract void onFileStart(String topic, long fileId, Map<String,String> extras);
     
-    public abstract void onFileEnd(long fileId);
+    public abstract void onFileEnd(String topic, long fileId);
     
-    public abstract void onFileData(long fileId, byte[] data);
+    public abstract void onFileData(String topic, long fileId, byte[] data);
 
     @Override
     public void onBinaryMessage(String topic, byte[] message) {
-        if(!topic.equals(MQ.FILE_BROADCAST) || message.length <9){
+        if(message.length <9){
             return;
         }
-        long fileId = ByteUtil.toLong(Arrays.copyOf(message, 8));
-        byte type = message[8];
+        FileBroadcastMessage fbm = FileBroadcastMessage.parse(message);
+        byte type = fbm.getType();
+        long fileId = fbm.getFileId();
         if(type==MQ.BROADCAST_START){
-            onFileStart(fileId);
+            onFileStart(topic, fileId, fbm.getExtras());
         }
         else if(type==MQ.BROADCAST_END){
-            onFileEnd(fileId);
+            onFileEnd(topic, fileId);
         }
         else if(type==MQ.BROADCAST_DATA){
-            onFileData(fileId, Arrays.copyOfRange(message, 9, message.length));
+            onFileData(topic, fileId, fbm.getFileData());
         }
     }
 

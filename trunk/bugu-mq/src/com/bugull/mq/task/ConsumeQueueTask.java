@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.task;
 
+import com.bugull.mq.MQ;
+import com.bugull.mq.listener.QueueListener;
+import com.bugull.mq.task.BlockedTask;
+import com.bugull.mq.utils.StringUtil;
+import com.bugull.mq.utils.JedisUtil;
 import java.util.List;
 import redis.clients.jedis.JedisPool;
 

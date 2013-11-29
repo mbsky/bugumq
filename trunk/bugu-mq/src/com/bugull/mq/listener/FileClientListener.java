@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.listener;
 
+import com.bugull.mq.message.FileMessage;
+import com.bugull.mq.MQ;
+import com.bugull.mq.utils.StringUtil;
 import java.util.Map;
 
 /**

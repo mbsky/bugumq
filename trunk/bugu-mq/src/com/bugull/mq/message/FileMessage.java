@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.message;
 
+import com.bugull.mq.MQ;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;

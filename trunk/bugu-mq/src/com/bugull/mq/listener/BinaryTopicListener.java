@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.listener;
 
 import redis.clients.jedis.BinaryJedisPubSub;
 

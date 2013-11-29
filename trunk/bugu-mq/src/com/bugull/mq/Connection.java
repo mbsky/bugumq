@@ -16,6 +16,7 @@
 
 package com.bugull.mq;
 
+import com.bugull.mq.task.KeepAliveTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +79,7 @@ public class Connection {
         if(client != null){
             client.stopAllConsume();
             client.stopAllTopicTask();
+            client.stopAllFileBroadcastTask();
         }
         if(pool != null){
             pool.destroy();

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.utils;
+
+import com.bugull.mq.MQ;
 
 /**
  *

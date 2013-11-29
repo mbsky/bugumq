@@ -16,6 +16,22 @@
 
 package com.bugull.mq;
 
+import com.bugull.mq.exception.MQException;
+import com.bugull.mq.message.FileMessage;
+import com.bugull.mq.listener.TopicListener;
+import com.bugull.mq.listener.QueueListener;
+import com.bugull.mq.listener.FileListener;
+import com.bugull.mq.listener.FileClientListener;
+import com.bugull.mq.listener.FileBroadcastListener;
+import com.bugull.mq.task.SubscribeTopicTask;
+import com.bugull.mq.task.SubscribePatternTask;
+import com.bugull.mq.task.SubscribeFileBroadcastTask;
+import com.bugull.mq.task.GetFileDataTask;
+import com.bugull.mq.task.ConsumeQueueTask;
+import com.bugull.mq.task.BlockedTask;
+import com.bugull.mq.utils.StringUtil;
+import com.bugull.mq.utils.JedisUtil;
+import com.bugull.mq.utils.ByteUtil;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,11 +57,12 @@ public class Client {
     private JedisPool pool;
     
     private TopicListener topicListener;
-    
     private FileListener fileListener;
+    private FileBroadcastListener broadcastListener;
     
     private final ConcurrentMap<String, ExecutorService> queueServices = new ConcurrentHashMap<String, ExecutorService>();
     private final ConcurrentMap<String, ExecutorService> topicServices = new ConcurrentHashMap<String, ExecutorService>();
+    private final ConcurrentMap<String, ExecutorService> broadcastServices = new ConcurrentHashMap<String, ExecutorService>();
     
     //store the blocked tasks, in order to stop it and close the jedis client.
     private final ConcurrentMap<String, BlockedTask> blockedTasks = new ConcurrentHashMap<String, BlockedTask>();
@@ -331,6 +348,27 @@ public class Client {
         }
     }
     
+    public void stopAllFileBroadcastTask(){
+        Set<String> set = broadcastServices.keySet();
+        for(String topic : set){
+            BlockedTask task = blockedTasks.get(topic);
+            if(task != null){
+                task.setStopped(true);
+                try{
+                    task.getJedis().disconnect();
+                }catch(Exception ex){
+                    //ignore ex
+                }
+                blockedTasks.remove(topic);
+            }
+            ExecutorService es = broadcastServices.get(topic);
+            if(es != null){
+                es.shutdownNow();
+                broadcastServices.remove(topic);
+            }
+        }
+    }
+    
     public void clearQueue(String... queues) throws MQException {
         Jedis jedis = null;
         try{
@@ -442,7 +480,7 @@ public class Client {
         this.consume(new FileClientListener(fileListener), MQ.FILE_CLIENT + Connection.getInstance().getClientId());
     }
     
-    public void requestSendFile(String toClientId, Map<String, String> extras) throws MQException {
+    public long requestSendFile(String toClientId, Map<String, String> extras) throws MQException {
         Jedis jedis = null;
         long count = 0;
         try{
@@ -461,7 +499,8 @@ public class Client {
             fm.setFileId(count);
             fm.setExtras(extras);
             this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
-        } 
+        }
+        return count;
     }
     
     public void sendFileData(long fileId, byte[] data) throws MQException {
@@ -512,6 +551,45 @@ public class Client {
         fm.setFileId(fileId);
         fm.setExtras(extras);
         this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
+    }
+    
+    public void setFileBroadcastListener(FileBroadcastListener broadcastListener){
+        this.broadcastListener = broadcastListener;
+    }
+    
+    public void subscribeFileBroadcast(String... topics) {
+        String key = StringUtil.concat(topics);
+        ExecutorService es = broadcastServices.get(key);
+        if(es == null){
+            es = Executors.newSingleThreadExecutor();
+            ExecutorService temp = broadcastServices.putIfAbsent(key, es);
+            if(temp == null){
+                SubscribeFileBroadcastTask task = new SubscribeFileBroadcastTask(broadcastListener, pool, ByteUtil.getTopicBytes(topics));
+                es.execute(task);
+                blockedTasks.putIfAbsent(key, task);
+            }
+        }
+    }
+    
+    public void unsubscribeFileBroadcast(String... topics) throws MQException {
+        try{
+            broadcastListener.unsubscribe(ByteUtil.getTopicBytes(topics));
+        }catch(Exception ex){
+            throw new MQException(ex.getMessage());
+        }
+    }
+    
+    public long startBroadcastFile(Map<String, String> extras){
+        long fileId = System.currentTimeMillis();
+        return fileId;
+    }
+    
+    public void endBroadcastFile(long fileId){
+        
+    }
+    
+    public void broadcastFileData(long fileId, byte[] data){
+        
     }
 
 }
