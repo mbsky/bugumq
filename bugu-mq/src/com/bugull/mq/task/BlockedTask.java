@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.task;
+
+import redis.clients.jedis.Jedis;
 
 /**
- *
+ * Store the blocked jedis client, in order to close it.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class MQException extends Exception {
+public abstract class BlockedTask implements Runnable {
     
-    public MQException(String message) {
-        super(message);
+    protected Jedis jedis;
+    protected boolean stopped;
+    
+    public Jedis getJedis(){
+        return jedis;
+    }
+    
+    public void setStopped(boolean stopped){
+        this.stopped = stopped;
     }
 
 }

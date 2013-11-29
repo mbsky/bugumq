@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
-
-import redis.clients.jedis.Jedis;
+package com.bugull.mq.listener;
 
 /**
- * Store the blocked jedis client, in order to close it.
+ * Listener to receive queue message.
  * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public abstract class BlockedTask implements Runnable {
+public abstract class QueueListener {
     
-    protected Jedis jedis;
-    protected boolean stopped;
-    
-    public Jedis getJedis(){
-        return jedis;
-    }
-    
-    public void setStopped(boolean stopped){
-        this.stopped = stopped;
-    }
+    public abstract void onQueueMessage(String queue, String message);
 
 }

@@ -61,9 +61,6 @@ public final class MQ {
     public static final int FILE_ACCEPT = 2;
     public static final int FILE_REJECT = 3;
     
-    //for file broadcast
-    public static final String FILE_BROADCAST = "bugu_f_bc";
-    
     //file boradcast message type
     public static final byte BROADCAST_START = 0x10;
     public static final byte BROADCAST_END = 0x11;

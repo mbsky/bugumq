@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.listener;
 
+import com.bugull.mq.Connection;
+import com.bugull.mq.MQ;
+import com.bugull.mq.utils.StringUtil;
+import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;

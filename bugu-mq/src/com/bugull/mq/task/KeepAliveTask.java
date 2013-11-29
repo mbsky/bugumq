@@ -14,25 +14,37 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.task;
 
+import com.bugull.mq.Connection;
+import com.bugull.mq.MQ;
+import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.exceptions.JedisException;
 
 /**
- *
+ * Sending online message in period.
+ * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public final class JedisUtil {
-    
-    public static void returnToPool(JedisPool pool, Jedis jedis){
+public class KeepAliveTask implements Runnable {
+
+    @Override
+    public void run() {
+        Connection conn = Connection.getInstance();
+        JedisPool pool = conn.getPool();
+        String key = MQ.ONLINE + conn.getClientId();
+        int seconds = (int)(conn.getKeepAlive() * 1.5F);
+        Jedis jedis = null;
         try{
-            pool.returnResource(jedis);
+            jedis = pool.getResource();
+            jedis.setex(key, seconds, "true");
         }catch(JedisException ex){
             //ignore the ex
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
         }
-        
     }
 
 }

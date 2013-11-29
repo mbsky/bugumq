@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.task;
 
+import com.bugull.mq.listener.TopicListener;
+import com.bugull.mq.task.BlockedTask;
+import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.JedisPool;
 
 /**
- * Thread to receive pattern message.
+ * Thread to receive topic message.
  * 
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class SubscribePatternTask extends BlockedTask {
+public class SubscribeTopicTask extends BlockedTask {
     
     private TopicListener listener;
     private JedisPool pool;
-    private String[] patterns;
+    private String[] topics;
 
-    public SubscribePatternTask(TopicListener listener, JedisPool pool, String[] patterns) {
+    public SubscribeTopicTask(TopicListener listener, JedisPool pool, String[] topics) {
         this.listener = listener;
         this.pool = pool;
-        this.patterns = patterns;
+        this.topics = topics;
     }
 
     @Override
@@ -40,8 +43,8 @@ public class SubscribePatternTask extends BlockedTask {
         while(!stopped){
             try{
                 jedis = pool.getResource();
-                //the psubscribe method is blocked.
-                jedis.psubscribe(listener, patterns);
+                //the subscribe method is blocked.
+                jedis.subscribe(listener, topics);
                 //if come here, shows that all topics have been unsubscirbed.
                 stopped = true;
             }catch(Exception ex){

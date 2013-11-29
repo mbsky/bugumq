@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
+package com.bugull.mq.utils;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  *
@@ -42,6 +44,19 @@ public class ByteUtil {
             value += ( (long)(bytes[i] & 0xFF) ) << shift;
         }
         return value;
+    }
+    
+    public static byte[][] getTopicBytes(String... topics){
+        int len = topics.length;
+        byte[][] channel = new byte[len][];
+        for(int i=0; i<len; i++){
+            try {
+                channel[i] = topics[i].getBytes("UTF-8");
+            } catch (UnsupportedEncodingException ex) {
+                
+            }
+        }
+        return channel;
     }
 
 }

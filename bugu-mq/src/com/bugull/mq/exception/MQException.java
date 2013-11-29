@@ -14,27 +14,16 @@
  * limitations under the License.
  */
 
-package com.bugull.mq;
-
-import java.util.Map;
+package com.bugull.mq.exception;
 
 /**
- * Listener to transfer files.
- * 
+ *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public abstract class FileListener {
+public class MQException extends Exception {
     
-    public abstract void onRequest(String fromClientId, long fileId, Map<String,String> extras);
-    
-    public abstract void onAccept(String fromClientId, long fileId, Map<String,String> extras);
-    
-    public abstract void onReject(String fromClientId, long fileId, Map<String,String> extras);
-    
-    public abstract void onFileData(long fileId, byte[] data);
-    
-    public abstract void onFileEnd(long fileId);
-    
-    public abstract void onError(long fileId);
+    public MQException(String message) {
+        super(message);
+    }
 
 }
