@@ -46,7 +46,7 @@ public class ByteUtil {
         return value;
     }
     
-    public static byte[][] getTopicBytes(String... topics){
+    public static byte[][] getTopicsBytes(String... topics){
         int len = topics.length;
         byte[][] channel = new byte[len][];
         for(int i=0; i<len; i++){
