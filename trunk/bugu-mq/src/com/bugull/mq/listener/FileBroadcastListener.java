@@ -18,7 +18,6 @@ package com.bugull.mq.listener;
 
 import com.bugull.mq.message.FileBroadcastMessage;
 import com.bugull.mq.MQ;
-import com.bugull.mq.listener.BinaryTopicListener;
 import java.util.Map;
 
 /**

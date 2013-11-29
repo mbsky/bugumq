@@ -23,6 +23,7 @@ import com.bugull.mq.listener.QueueListener;
 import com.bugull.mq.listener.FileListener;
 import com.bugull.mq.listener.FileClientListener;
 import com.bugull.mq.listener.FileBroadcastListener;
+import com.bugull.mq.message.FileBroadcastMessage;
 import com.bugull.mq.task.SubscribeTopicTask;
 import com.bugull.mq.task.SubscribePatternTask;
 import com.bugull.mq.task.SubscribeFileBroadcastTask;
@@ -32,6 +33,7 @@ import com.bugull.mq.task.BlockedTask;
 import com.bugull.mq.utils.StringUtil;
 import com.bugull.mq.utils.JedisUtil;
 import com.bugull.mq.utils.ByteUtil;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -564,7 +566,7 @@ public class Client {
             es = Executors.newSingleThreadExecutor();
             ExecutorService temp = broadcastServices.putIfAbsent(key, es);
             if(temp == null){
-                SubscribeFileBroadcastTask task = new SubscribeFileBroadcastTask(broadcastListener, pool, ByteUtil.getTopicBytes(topics));
+                SubscribeFileBroadcastTask task = new SubscribeFileBroadcastTask(broadcastListener, pool, ByteUtil.getTopicsBytes(topics));
                 es.execute(task);
                 blockedTasks.putIfAbsent(key, task);
             }
@@ -573,23 +575,56 @@ public class Client {
     
     public void unsubscribeFileBroadcast(String... topics) throws MQException {
         try{
-            broadcastListener.unsubscribe(ByteUtil.getTopicBytes(topics));
+            broadcastListener.unsubscribe(ByteUtil.getTopicsBytes(topics));
         }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }
     }
     
-    public long startBroadcastFile(Map<String, String> extras){
+    public long startBroadcastFile(String topic, Map<String, String> extras) throws MQException {
         long fileId = System.currentTimeMillis();
+        FileBroadcastMessage fbm = new FileBroadcastMessage();
+        fbm.setType(MQ.BROADCAST_START);
+        fbm.setFileId(fileId);
+        fbm.setExtras(extras);
+        byte[] message = fbm.toBytes();
+        this.publish(topic, message);
         return fileId;
     }
     
-    public void endBroadcastFile(long fileId){
-        
+    public void endBroadcastFile(String topic, long fileId) throws MQException {
+        FileBroadcastMessage fbm = new FileBroadcastMessage();
+        fbm.setType(MQ.BROADCAST_END);
+        fbm.setFileId(fileId);
+        byte[] message = fbm.toBytes();
+        this.publish(topic, message);
     }
     
-    public void broadcastFileData(long fileId, byte[] data){
-        
+    public void broadcastFileData(String topic, long fileId, byte[] data) throws MQException {
+        FileBroadcastMessage fbm = new FileBroadcastMessage();
+        fbm.setType(MQ.BROADCAST_DATA);
+        fbm.setFileId(fileId);
+        fbm.setFileData(data);
+        byte[] message = fbm.toBytes();
+        this.publish(topic, message);
+    }
+    
+    private void publish(String topic, byte[] message) throws MQException {
+        byte[] channel = null;
+        try{
+            channel = topic.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            
+        }
+        Jedis jedis = null;
+        try{
+            jedis = pool.getResource();
+            jedis.publish(channel, message);
+        }catch(Exception ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
     }
 
 }
