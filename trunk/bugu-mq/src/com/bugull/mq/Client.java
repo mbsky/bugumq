@@ -484,25 +484,25 @@ public class Client {
     
     public long requestSendFile(String toClientId, Map<String, String> extras) throws MQException {
         Jedis jedis = null;
-        long count = 0;
+        long fileId = 0;
         try{
             jedis = pool.getResource();
-            count = jedis.incr(MQ.FILE_COUNT);
+            fileId = jedis.incr(MQ.FILE_COUNT);
         }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
             JedisUtil.returnToPool(pool, jedis);
         }
-        //if count==0, exception is catched
-        if(count > 0){
+        //if fileId==0, exception is catched
+        if(fileId > 0){
             FileMessage fm = new FileMessage();
             fm.setFromClientId(Connection.getInstance().getClientId());
             fm.setType(MQ.FILE_REQUEST);
-            fm.setFileId(count);
+            fm.setFileId(fileId);
             fm.setExtras(extras);
             this.produce(MQ.FILE_CLIENT + toClientId, MQ.FILE_MSG_TIMEOUT, fm.toString());
         }
-        return count;
+        return fileId;
     }
     
     public void sendFileData(long fileId, byte[] data) throws MQException {
@@ -582,13 +582,25 @@ public class Client {
     }
     
     public long startBroadcastFile(String topic, Map<String, String> extras) throws MQException {
-        long fileId = System.currentTimeMillis();
-        FileBroadcastMessage fbm = new FileBroadcastMessage();
-        fbm.setType(MQ.BROADCAST_START);
-        fbm.setFileId(fileId);
-        fbm.setExtras(extras);
-        byte[] message = fbm.toBytes();
-        this.publish(topic, message);
+        Jedis jedis = null;
+        long fileId = 0;
+        try{
+            jedis = pool.getResource();
+            fileId = jedis.incr(MQ.FILE_COUNT);
+        }catch(Exception ex){
+            throw new MQException(ex.getMessage());
+        }finally{
+            JedisUtil.returnToPool(pool, jedis);
+        }
+        //if fileId==0, exception is catched
+        if(fileId > 0){
+            FileBroadcastMessage fbm = new FileBroadcastMessage();
+            fbm.setType(MQ.BROADCAST_START);
+            fbm.setFileId(fileId);
+            fbm.setExtras(extras);
+            byte[] message = fbm.toBytes();
+            this.publish(topic, message);
+        }
         return fileId;
     }
     
@@ -612,7 +624,7 @@ public class Client {
     private void publish(String topic, byte[] message) throws MQException {
         byte[] channel = null;
         try{
-            channel = topic.getBytes("UTF-8");
+            channel = topic.getBytes(MQ.CHARSET);
         } catch (UnsupportedEncodingException ex) {
             
         }

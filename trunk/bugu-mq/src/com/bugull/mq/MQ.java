@@ -31,6 +31,8 @@ public final class MQ {
     public static final int FILE_MSG_TIMEOUT = 60;  //in seconds
     public static final int FILE_CHUNK_TIMEOUT = 60;  //in seconds
     
+    public static final String CHARSET = "UTF-8";
+    
     //for queue
     public static final String MSG_COUNT = "msg:count";
     
