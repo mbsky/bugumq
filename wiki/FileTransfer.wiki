@@ -1,18 +1,18 @@
-#summary 文件传输
+#summary 一对一文件传输
 
-= BuguMQ的文件传输 =
+= 一对一文件传输 =
 
-使用BuguMQ，不仅能在client之间传递消息，还能一对一发送文件。
+使用BuguMQ，不仅能在client之间相互传递消息，还能发送文件。
 
 ==方法说明==
 
-Client类提供了以下方法，用于文件传输：
+Client类提供了以下方法，用于一对一文件传输：
 {{{
 //设置文件传输监听器
 public void setFileListener(FileListener fileListener)
 
 //请求传输文件
-public void requestSendFile(String toClientId, Map<String, String> extras)
+public long requestSendFile(String toClientId, Map<String, String> extras)
 
 //同意接收文件
 public void acceptReceiveFile(String toClientId, long fileId, Map<String, String> extras)
