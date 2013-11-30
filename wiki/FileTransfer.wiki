@@ -11,7 +11,7 @@ Client类提供了以下方法，用于一对一文件传输：
 //设置文件传输监听器
 public void setFileListener(FileListener fileListener)
 
-//请求传输文件
+//请求传输文件。注意，这里返回一个long型的fileId
 public long requestSendFile(String toClientId, Map<String, String> extras)
 
 //同意接收文件
