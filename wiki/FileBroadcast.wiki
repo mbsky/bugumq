@@ -17,7 +17,7 @@ public void subscribeFileBroadcast(String... topics)
 //退订文件广播
 public void unsubscribeFileBroadcast(String... topics)
 
-//开始文件广播
+//开始文件广播。注意，这里返回一个long型的fileId
 public long startBroadcastFile(String topic, Map<String, String> extras)
 
 //广播文件数据
