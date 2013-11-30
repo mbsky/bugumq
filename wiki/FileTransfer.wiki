@@ -76,7 +76,7 @@ public abstract void onError(long fileId);
             try{
                 Client client = Connection.getInstance().getClient();
                 FileInputStream fis = new FileInputStream(filename);
-                int chunkSize = 32 * 1024;
+                int chunkSize = 16 * 1024;
                 byte[] chunkData = new byte[chunkSize];
                 int bytesRead = fis.read(chunkData, 0, chunkSize);
                 while(bytesRead > 0){
