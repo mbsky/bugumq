@@ -72,7 +72,7 @@ public abstract void onFileData(String topic, long fileId, byte[] data);
         Client client = Connection.getInstance().getClient();
         //设置文件广播监听器
         client.setFileBroadcastListener(new MyFileBroadcastListener());
-        //
+        //订阅某个topic上的文件广播
         client.subscribeFileBroadcast("video_broadcast");
     }
     
