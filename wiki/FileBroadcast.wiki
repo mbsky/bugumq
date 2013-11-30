@@ -119,4 +119,6 @@ public abstract void onFileData(String topic, long fileId, byte[] data);
 
 1、当有多个文件同时在传输的时候，需要用fileId进行区分。fileId是由BuguMQ自动产生的、能唯一区分不同文件的long型数值。
 
-2、BuguMQ按块进行文件传输，块的大小由开发者决定。推荐值是16K字节。
+2、鉴于消息广播的不可靠性，一对多文件广播，只适用于小文件的传输，或者对传输可靠性要求不高的场合。
+
+3、BuguMQ按块进行文件传输，块的大小由开发者决定。推荐值是16K字节。
