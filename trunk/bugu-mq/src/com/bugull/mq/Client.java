@@ -586,7 +586,7 @@ public class Client {
         long fileId = 0;
         try{
             jedis = pool.getResource();
-            fileId = jedis.incr(MQ.FILE_COUNT);
+            fileId = jedis.incr(MQ.BROADCAST_COUNT);
         }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }finally{
