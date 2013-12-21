@@ -55,8 +55,8 @@ public final class MQ {
     public static final String NIL_MESSAGE = "nil";
     public static final String EOF_MESSAGE = "_EOF_";
     
-    public static final String SPLIT_MESSAGE = "_#_";
-    public static final String SPLIT_EXTRA = "_:_";
+    public static final String SPLIT_MESSAGE = "_0x23_";
+    public static final String SPLIT_EXTRA = "_0x3A_";
     
     //file message type
     public static final int FILE_REQUEST = 1;
