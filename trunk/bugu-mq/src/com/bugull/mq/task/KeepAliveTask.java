@@ -21,7 +21,6 @@ import com.bugull.mq.MQ;
 import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.exceptions.JedisException;
 
 /**
  * Sending online message in period.
@@ -40,7 +39,7 @@ public class KeepAliveTask implements Runnable {
         try{
             jedis = pool.getResource();
             jedis.setex(key, seconds, "true");
-        }catch(JedisException ex){
+        }catch(Exception ex){
             //ignore the ex
         }finally{
             JedisUtil.returnToPool(pool, jedis);

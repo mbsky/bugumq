@@ -23,7 +23,6 @@ import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPubSub;
-import redis.clients.jedis.exceptions.JedisException;
 
 /**
  * Listener to receive topic message.
@@ -63,7 +62,7 @@ public abstract class TopicListener extends JedisPubSub {
                     onTopicMessage(channel, retainMessage);
                 }
             }
-        }catch(JedisException ex){
+        }catch(Exception ex){
             //ignore the ex
         }finally{
             JedisUtil.returnToPool(pool, jedis);
