@@ -72,6 +72,10 @@ public abstract class BinaryTopicListener extends BinaryJedisPubSub {
         }
     }
     
+    public void closeAllTimer(){
+        scheduler.shutdownNow();
+    }
+    
     public abstract void onBinaryMessage(String topic, byte[] message);
     
     @Override
