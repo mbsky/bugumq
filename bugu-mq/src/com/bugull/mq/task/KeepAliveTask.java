@@ -38,7 +38,7 @@ public class KeepAliveTask implements Runnable {
         Jedis jedis = null;
         try{
             jedis = pool.getResource();
-            jedis.setex(key, seconds, "true");
+            jedis.setex(key, seconds, "T");  //T stands for True
         }catch(Exception ex){
             ex.printStackTrace();
         }finally{
