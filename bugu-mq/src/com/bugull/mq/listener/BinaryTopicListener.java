@@ -16,6 +16,17 @@
 
 package com.bugull.mq.listener;
 
+import com.bugull.mq.Client;
+import com.bugull.mq.Connection;
+import com.bugull.mq.MQ;
+import com.bugull.mq.exception.MQException;
+import java.io.UnsupportedEncodingException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import redis.clients.jedis.BinaryJedisPubSub;
 
 /**
@@ -24,6 +35,43 @@ import redis.clients.jedis.BinaryJedisPubSub;
  */
 public abstract class BinaryTopicListener extends BinaryJedisPubSub {
     
+    protected ConcurrentMap<String, ScheduledFuture> map = new ConcurrentHashMap<String, ScheduledFuture>();
+    
+    protected ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    
+    /**
+     * use a timer to re-subscribe
+     * @param topic
+     * @param pattern 
+     */
+    public void addTimer(final String topic){
+        Runnable task = new Runnable(){
+            @Override
+            public void run() {
+                map.remove(topic);
+                Client client = Connection.getInstance().getClient();
+                try{
+                    client.unsubscribeFileBroadcast(topic);
+                }catch(MQException ex){
+
+                }
+                client.subscribeFileBroadcast(topic);
+            }
+        };
+        ScheduledFuture future = scheduler.schedule(task, MQ.SUBSCRIBE_TIMEOUT, TimeUnit.SECONDS);
+        ScheduledFuture temp = map.putIfAbsent(topic, future);
+        if(temp != null){
+            future.cancel(true);
+        }
+    }
+    
+    public void removeTimer(String topic){
+        ScheduledFuture future = map.remove(topic);
+        if(future != null){
+            future.cancel(true);
+        }
+    }
+    
     public abstract void onBinaryMessage(String topic, byte[] message);
     
     @Override
@@ -31,8 +79,14 @@ public abstract class BinaryTopicListener extends BinaryJedisPubSub {
         if(channel==null || message==null){
             return;
         }
+        String s = null;
+        try{
+            s = new String(channel, MQ.CHARSET);
+        }catch(UnsupportedEncodingException ex){
+            
+        }
         synchronized(this){
-            onBinaryMessage(new String(channel), message);
+            onBinaryMessage(s, message);
         }
     }
 
@@ -43,7 +97,13 @@ public abstract class BinaryTopicListener extends BinaryJedisPubSub {
 
     @Override
     public void onSubscribe(byte[] channel, int subscribedChannels){
-        
+        String s = null;
+        try{
+            s = new String(channel, MQ.CHARSET);
+        }catch(UnsupportedEncodingException ex){
+            
+        }
+        removeTimer(s);
     }
 
     @Override

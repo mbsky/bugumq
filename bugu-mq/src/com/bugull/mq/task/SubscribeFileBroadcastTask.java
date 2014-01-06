@@ -17,7 +17,6 @@
 package com.bugull.mq.task;
 
 import com.bugull.mq.listener.FileBroadcastListener;
-import com.bugull.mq.task.BlockedTask;
 import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.JedisPool;
 
@@ -48,7 +47,7 @@ public class SubscribeFileBroadcastTask extends BlockedTask {
                 //if come here, shows that all topics have been unsubscirbed.
                 stopped = true;
             }catch(Exception ex){
-                //ignore the ex
+                ex.printStackTrace();
             }finally{
                 JedisUtil.returnToPool(pool, jedis);
             }
