@@ -85,6 +85,10 @@ public abstract class TopicListener extends JedisPubSub {
         }
     }
     
+    public void closeAllTimer(){
+        scheduler.shutdownNow();
+    }
+    
     public abstract void onTopicMessage(String topic, String message);
     
     public abstract void onPatternMessage(String pattern, String topic, String message);

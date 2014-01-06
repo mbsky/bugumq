@@ -360,6 +360,9 @@ public class Client {
                 topicServices.remove(topic);
             }
         }
+        if(topicListener != null){
+            topicListener.closeAllTimer();
+        }
     }
     
     public void stopAllFileBroadcastTask(){
@@ -380,6 +383,9 @@ public class Client {
                 es.shutdownNow();
                 broadcastServices.remove(topic);
             }
+        }
+        if(broadcastListener != null){
+            broadcastListener.closeAllTimer();
         }
     }
     
