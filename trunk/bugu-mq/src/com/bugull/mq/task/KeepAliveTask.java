@@ -40,7 +40,7 @@ public class KeepAliveTask implements Runnable {
             jedis = pool.getResource();
             jedis.setex(key, seconds, "true");
         }catch(Exception ex){
-            //ignore the ex
+            ex.printStackTrace();
         }finally{
             JedisUtil.returnToPool(pool, jedis);
         }

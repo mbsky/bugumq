@@ -131,6 +131,9 @@ public class Client {
                 blockedTasks.putIfAbsent(key, task);
             }
         }
+        for(String topic : topics){
+            topicListener.addTimer(topic, true);
+        }
     }
     
     public void subscribePattern(String... patterns) {
@@ -145,6 +148,9 @@ public class Client {
                 blockedTasks.putIfAbsent(key, task);
             }
         }
+        for(String pattern : patterns){
+            topicListener.addTimer(pattern, false);
+        }
     }
     
     public void unsubscribe(String... topics) throws MQException {
@@ -153,6 +159,9 @@ public class Client {
         }catch(Exception ex){
             throw new MQException(ex.getMessage());
         }
+        for(String topic : topics){
+            topicListener.removeTimer(topic);
+        }
     }
     
     public void unsubscribePattern(String... patterns) throws MQException {
@@ -160,6 +169,9 @@ public class Client {
             topicListener.punsubscribe(patterns);
         }catch(Exception ex){
             throw new MQException(ex.getMessage());
+        }
+        for(String pattern : patterns){
+            topicListener.removeTimer(pattern);
         }
     }
     
@@ -571,6 +583,9 @@ public class Client {
                 blockedTasks.putIfAbsent(key, task);
             }
         }
+        for(String topic : topics){
+            broadcastListener.addTimer(topic);
+        }
     }
     
     public void unsubscribeFileBroadcast(String... topics) throws MQException {
@@ -578,6 +593,9 @@ public class Client {
             broadcastListener.unsubscribe(ByteUtil.getTopicsBytes(topics));
         }catch(Exception ex){
             throw new MQException(ex.getMessage());
+        }
+        for(String topic : topics){
+            broadcastListener.removeTimer(topic);
         }
     }
     

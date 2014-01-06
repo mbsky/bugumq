@@ -47,7 +47,7 @@ public class ConsumeQueueTask extends BlockedTask {
             try{
                 jedis = pool.getResource();
                 //block until get a message
-                List<String> list = jedis.brpop(0, queue);
+                List<String> list = jedis.brpop(MQ.BLOCK_TIMEOUT, queue);
                 if(list!=null && list.size()==2){
                     String msgId = MQ.MSG_ID + list.get(1);
                     String msg = jedis.get(msgId);
@@ -59,7 +59,7 @@ public class ConsumeQueueTask extends BlockedTask {
                     }
                 }
             }catch(Exception ex){
-                //ignore the ex
+                ex.printStackTrace();
             }finally{
                 JedisUtil.returnToPool(pool, jedis);
             }

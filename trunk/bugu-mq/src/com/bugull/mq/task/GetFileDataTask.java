@@ -52,7 +52,11 @@ public class GetFileDataTask implements Runnable {
                 synchronized(fileListener){
                     if(list!=null && list.size()==2){
                         byte[] data = list.get(1);
-                        if(data.length != MQ.EOF_MESSAGE.length()){
+                        if(data==null || data.length==0){
+                            stopped = true;
+                            fileListener.onError(fileId);
+                        }
+                        else if(data.length != MQ.EOF_MESSAGE.length()){
                             fileListener.onFileData(fileId, data);
                         }
                         else{
@@ -71,10 +75,7 @@ public class GetFileDataTask implements Runnable {
                     }
                 }
             }catch(Exception ex){
-                stopped = true;
-                synchronized(fileListener){
-                    fileListener.onError(fileId);
-                }
+                ex.printStackTrace();
             }finally{
                 JedisUtil.returnToPool(pool, jedis);
             }
@@ -85,7 +86,7 @@ public class GetFileDataTask implements Runnable {
             jedis = pool.getResource();
             jedis.del(queue);
         }catch(Exception ex){
-            //ignore the ex
+            ex.printStackTrace();
         }finally{
             JedisUtil.returnToPool(pool, jedis);
         }
