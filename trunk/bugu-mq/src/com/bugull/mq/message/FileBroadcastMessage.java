@@ -84,7 +84,7 @@ public class FileBroadcastMessage {
                 Map<String, String> map = new HashMap<String, String>();
                 String exStr = null;
                 try{
-                    exStr = new String(exData, "UTF-8");
+                    exStr = new String(exData, MQ.CHARSET);
                 }catch(UnsupportedEncodingException ex){
 
                 }
@@ -115,7 +115,7 @@ public class FileBroadcastMessage {
             String s = sb.toString();
             String data = s.substring(0, s.length() - MQ.SPLIT_MESSAGE.length());
             try{
-                exData = data.getBytes("UTF-8");
+                exData = data.getBytes(MQ.CHARSET);
             }catch(UnsupportedEncodingException ex){
                 
             }

@@ -16,6 +16,7 @@
 
 package com.bugull.mq.utils;
 
+import com.bugull.mq.MQ;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -51,7 +52,7 @@ public class ByteUtil {
         byte[][] channel = new byte[len][];
         for(int i=0; i<len; i++){
             try {
-                channel[i] = topics[i].getBytes("UTF-8");
+                channel[i] = topics[i].getBytes(MQ.CHARSET);
             } catch (UnsupportedEncodingException ex) {
                 
             }
