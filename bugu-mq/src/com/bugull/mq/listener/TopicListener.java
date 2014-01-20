@@ -20,7 +20,6 @@ import com.bugull.mq.client.Client;
 import com.bugull.mq.Connection;
 import com.bugull.mq.utils.MQ;
 import com.bugull.mq.exception.MQException;
-import com.bugull.mq.utils.StringUtil;
 import com.bugull.mq.utils.JedisUtil;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -96,7 +95,7 @@ public abstract class TopicListener extends JedisPubSub {
         try{
             jedis = pool.getResource();
             String retainMessage = jedis.get(MQ.RETAIN + channel);
-            if(!StringUtil.isNull(retainMessage)){
+            if(retainMessage != null){
                 onTopicMessage(channel, retainMessage);
             }
         }catch(Exception ex){

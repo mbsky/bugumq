@@ -49,7 +49,7 @@ public class ConsumeBinaryQueueTask extends BlockedTask {
                 if(list!=null && list.size()==2){
                     byte[] msgId = (MQ.MSG_ID + list.get(1)).getBytes(MQ.CHARSET);
                     byte[] msg = jedis.get(msgId);
-                    if(!BinaryUtil.isNull(msg)){
+                    if(msg != null){
                         jedis.del(msgId);
                         synchronized(listener){
                             listener.onQueueMessage(queue, msg);
