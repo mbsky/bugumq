@@ -16,25 +16,24 @@
 
 package com.bugull.mq.task;
 
-import com.bugull.mq.listener.FileBroadcastListener;
+import com.bugull.mq.listener.BinaryTopicListener;
 import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.JedisPool;
 
 /**
- * Thread to receive file broadcast message.
- * 
+ *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class SubscribeFileBroadcastTask extends BlockedTask {
+public class SubscribeBinaryTopicTask extends BlockedTask {
     
-    private FileBroadcastListener listener;
+    private BinaryTopicListener listener;
     private JedisPool pool;
-    private byte[][] channel;
+    private byte[][] topics;
 
-    public SubscribeFileBroadcastTask(FileBroadcastListener listener, JedisPool pool, byte[][] channel) {
+    public SubscribeBinaryTopicTask(BinaryTopicListener listener, JedisPool pool, byte[][] topics) {
         this.listener = listener;
         this.pool = pool;
-        this.channel = channel;
+        this.topics = topics;
     }
 
     @Override
@@ -43,7 +42,7 @@ public class SubscribeFileBroadcastTask extends BlockedTask {
             try{
                 jedis = pool.getResource();
                 //the subscribe method is blocked.
-                jedis.subscribe(listener, channel);
+                jedis.subscribe(listener, topics);
                 //if come here, shows that all topics have been unsubscirbed.
                 stopped = true;
             }catch(Exception ex){
@@ -52,7 +51,6 @@ public class SubscribeFileBroadcastTask extends BlockedTask {
                 JedisUtil.returnToPool(pool, jedis);
             }
         }
-        
     }
 
 }

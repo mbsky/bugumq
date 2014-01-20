@@ -17,7 +17,7 @@
 package com.bugull.mq.task;
 
 import com.bugull.mq.listener.FileListener;
-import com.bugull.mq.MQ;
+import com.bugull.mq.utils.MQ;
 import com.bugull.mq.utils.JedisUtil;
 import java.util.List;
 import redis.clients.jedis.Jedis;
@@ -49,30 +49,28 @@ public class GetFileDataTask implements Runnable {
             try{
                 jedis = pool.getResource();
                 List<byte[]> list = jedis.brpop(MQ.FILE_CHUNK_TIMEOUT, queue);
-                synchronized(fileListener){
-                    if(list!=null && list.size()==2){
-                        byte[] data = list.get(1);
-                        if(data==null || data.length==0){
-                            stopped = true;
-                            fileListener.onError(fileId);
-                        }
-                        else if(data.length != MQ.EOF_MESSAGE.length()){
-                            fileListener.onFileData(fileId, data);
-                        }
-                        else{
-                            String eof = new String(data);
-                            if(eof.equals(MQ.EOF_MESSAGE)){
-                                stopped = true;
-                                fileListener.onFileEnd(fileId);
-                            }else{
-                                fileListener.onFileData(fileId, data);
-                            }
-                        }
-                    }
-                    else{
+                if(list!=null && list.size()==2){
+                    byte[] data = list.get(1);
+                    if(data==null || data.length==0){
                         stopped = true;
                         fileListener.onError(fileId);
                     }
+                    else if(data.length != MQ.EOF_MESSAGE.length()){
+                        fileListener.onFileData(fileId, data);
+                    }
+                    else{
+                        String eof = new String(data);
+                        if(eof.equals(MQ.EOF_MESSAGE)){
+                            stopped = true;
+                            fileListener.onFileEnd(fileId);
+                        }else{
+                            fileListener.onFileData(fileId, data);
+                        }
+                    }
+                }
+                else{
+                    stopped = true;
+                    fileListener.onError(fileId);
                 }
             }catch(Exception ex){
                 ex.printStackTrace();

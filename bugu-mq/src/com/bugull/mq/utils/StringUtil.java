@@ -16,8 +16,6 @@
 
 package com.bugull.mq.utils;
 
-import com.bugull.mq.MQ;
-
 /**
  *
  * @author Frank Wen(xbwen@hotmail.com)
@@ -39,7 +37,7 @@ public final class StringUtil {
      * @return 
      */
     public static boolean isEmpty(String s){
-        return s==null || s.equals("");
+        return s==null || s.trim().length() == 0;
     }
     
     /**

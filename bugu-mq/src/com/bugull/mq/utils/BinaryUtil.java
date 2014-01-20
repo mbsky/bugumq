@@ -16,14 +16,13 @@
 
 package com.bugull.mq.utils;
 
-import com.bugull.mq.MQ;
 import java.io.UnsupportedEncodingException;
 
 /**
  *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class ByteUtil {
+public class BinaryUtil {
     
     public static byte[] fromLong(long x){
         byte[] result = new byte[8];
@@ -47,17 +46,30 @@ public class ByteUtil {
         return value;
     }
     
-    public static byte[][] getTopicsBytes(String... topics){
-        int len = topics.length;
-        byte[][] channel = new byte[len][];
-        for(int i=0; i<len; i++){
-            try {
-                channel[i] = topics[i].getBytes(MQ.CHARSET);
-            } catch (UnsupportedEncodingException ex) {
-                
+    public static byte[][] toBytes(String... ss){
+        int len = ss.length;
+        byte[][] bytes = new byte[len][];
+        try{
+            for(int i=0; i< len; i++){
+                bytes[i] = ss[i].getBytes(MQ.CHARSET);
+            }
+        }catch(UnsupportedEncodingException ex){
+            
+        }
+        return bytes;
+    }
+    
+    public static boolean isNull(byte[] bytes){
+        if(bytes == null){
+            return true;
+        }
+        if(bytes.length == 3){
+            String s = new String(bytes);
+            if(s.toLowerCase().equals(MQ.NIL_MESSAGE)){
+                return true;
             }
         }
-        return channel;
+        return false;
     }
 
 }

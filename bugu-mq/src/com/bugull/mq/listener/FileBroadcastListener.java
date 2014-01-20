@@ -17,7 +17,7 @@
 package com.bugull.mq.listener;
 
 import com.bugull.mq.message.FileBroadcastMessage;
-import com.bugull.mq.MQ;
+import com.bugull.mq.utils.MQ;
 import java.util.Map;
 
 /**
@@ -33,7 +33,7 @@ public abstract class FileBroadcastListener extends BinaryTopicListener {
     public abstract void onFileData(String topic, long fileId, byte[] data);
 
     @Override
-    public void onBinaryMessage(String topic, byte[] message) {
+    public void onTopicMessage(String topic, byte[] message) {
         if(message.length <9){
             return;
         }

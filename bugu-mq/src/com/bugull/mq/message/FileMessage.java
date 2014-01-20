@@ -16,7 +16,7 @@
 
 package com.bugull.mq.message;
 
-import com.bugull.mq.MQ;
+import com.bugull.mq.utils.MQ;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
