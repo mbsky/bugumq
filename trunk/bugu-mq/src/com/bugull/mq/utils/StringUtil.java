@@ -23,15 +23,6 @@ package com.bugull.mq.utils;
 public final class StringUtil {
     
     /**
-     * is null message or not
-     * @param s
-     * @return 
-     */
-    public static boolean isNull(String s){
-        return s==null || s.toLowerCase().equals(MQ.NIL_MESSAGE);
-    }
-    
-    /**
      * is empty string or not
      * @param s
      * @return 

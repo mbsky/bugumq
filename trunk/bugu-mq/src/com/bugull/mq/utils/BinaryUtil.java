@@ -58,18 +58,5 @@ public class BinaryUtil {
         }
         return bytes;
     }
-    
-    public static boolean isNull(byte[] bytes){
-        if(bytes == null){
-            return true;
-        }
-        if(bytes.length == 3){
-            String s = new String(bytes);
-            if(s.toLowerCase().equals(MQ.NIL_MESSAGE)){
-                return true;
-            }
-        }
-        return false;
-    }
 
 }

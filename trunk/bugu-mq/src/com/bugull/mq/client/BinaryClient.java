@@ -265,7 +265,7 @@ public class BinaryClient extends AbstractClient {
                 long size = jedis.llen(queue);
                 for(long i=0; i<size; i++){
                     String id = jedis.rpop(queue);
-                    if(!StringUtil.isNull(id)){
+                    if(id != null){
                         jedis.del((MQ.MSG_ID + id).getBytes(MQ.CHARSET));
                     }
                 }
@@ -285,7 +285,7 @@ public class BinaryClient extends AbstractClient {
             long count = size - retainSize;
             for(long i=0; i<count; i++){
                 String id = jedis.rpop(queue);
-                if(!StringUtil.isNull(id)){
+                if(id != null){
                     jedis.del((MQ.MSG_ID + id).getBytes(MQ.CHARSET));
                 }
             }

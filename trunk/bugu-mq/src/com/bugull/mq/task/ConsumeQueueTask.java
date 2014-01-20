@@ -18,7 +18,6 @@ package com.bugull.mq.task;
 
 import com.bugull.mq.utils.MQ;
 import com.bugull.mq.listener.QueueListener;
-import com.bugull.mq.utils.StringUtil;
 import com.bugull.mq.utils.JedisUtil;
 import java.util.List;
 import redis.clients.jedis.JedisPool;
@@ -50,7 +49,7 @@ public class ConsumeQueueTask extends BlockedTask {
                 if(list!=null && list.size()==2){
                     String msgId = MQ.MSG_ID + list.get(1);
                     String msg = jedis.get(msgId);
-                    if(!StringUtil.isNull(msg)){
+                    if(msg != null){
                         jedis.del(msgId);
                         synchronized(listener){
                             listener.onQueueMessage(queue, msg);
