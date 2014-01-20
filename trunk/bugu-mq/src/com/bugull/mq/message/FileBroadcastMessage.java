@@ -16,8 +16,8 @@
 
 package com.bugull.mq.message;
 
-import com.bugull.mq.MQ;
-import com.bugull.mq.utils.ByteUtil;
+import com.bugull.mq.utils.MQ;
+import com.bugull.mq.utils.BinaryUtil;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -72,7 +72,7 @@ public class FileBroadcastMessage {
         FileBroadcastMessage fbm = new FileBroadcastMessage();
         byte theType = message[0];
         fbm.setType(theType);
-        long theFileId = ByteUtil.toLong(Arrays.copyOfRange(message, 1, 9));
+        long theFileId = BinaryUtil.toLong(Arrays.copyOfRange(message, 1, 9));
         fbm.setFileId(theFileId);
         int len = message.length;
         if(len>9){
@@ -100,7 +100,7 @@ public class FileBroadcastMessage {
     }
     
     public byte[] toBytes(){
-        byte[] fileIdData = ByteUtil.fromLong(fileId);
+        byte[] fileIdData = BinaryUtil.fromLong(fileId);
         byte[] exData = null;
         if(type==MQ.BROADCAST_DATA){
             exData = fileData;

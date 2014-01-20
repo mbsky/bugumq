@@ -16,25 +16,27 @@
 
 package com.bugull.mq.task;
 
-import com.bugull.mq.listener.TopicListener;
+import com.bugull.mq.utils.MQ;
+import com.bugull.mq.listener.BinaryQueueListener;
+import com.bugull.mq.utils.BinaryUtil;
 import com.bugull.mq.utils.JedisUtil;
+import java.util.List;
 import redis.clients.jedis.JedisPool;
 
 /**
- * Thread to receive pattern message.
- * 
+ *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public class SubscribePatternTask extends BlockedTask {
+public class ConsumeBinaryQueueTask extends BlockedTask {
     
-    private TopicListener listener;
+    private BinaryQueueListener listener;
     private JedisPool pool;
-    private String[] patterns;
+    private String queue;
 
-    public SubscribePatternTask(TopicListener listener, JedisPool pool, String[] patterns) {
+    public ConsumeBinaryQueueTask(BinaryQueueListener listener, JedisPool pool, String queue) {
         this.listener = listener;
         this.pool = pool;
-        this.patterns = patterns;
+        this.queue = queue;
     }
 
     @Override
@@ -42,17 +44,24 @@ public class SubscribePatternTask extends BlockedTask {
         while(!stopped){
             try{
                 jedis = pool.getResource();
-                //the psubscribe method is blocked.
-                jedis.psubscribe(listener, patterns);
-                //if come here, shows that all topics have been unsubscirbed.
-                stopped = true;
+                //block until get a message
+                List<String> list = jedis.brpop(MQ.BLOCK_TIMEOUT, queue);
+                if(list!=null && list.size()==2){
+                    byte[] msgId = (MQ.MSG_ID + list.get(1)).getBytes(MQ.CHARSET);
+                    byte[] msg = jedis.get(msgId);
+                    if(!BinaryUtil.isNull(msg)){
+                        jedis.del(msgId);
+                        synchronized(listener){
+                            listener.onQueueMessage(queue, msg);
+                        }
+                    }
+                }
             }catch(Exception ex){
                 ex.printStackTrace();
             }finally{
                 JedisUtil.returnToPool(pool, jedis);
             }
         }
-        
     }
 
 }

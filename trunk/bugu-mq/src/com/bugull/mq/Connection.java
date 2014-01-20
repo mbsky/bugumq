@@ -16,6 +16,10 @@
 
 package com.bugull.mq;
 
+import com.bugull.mq.utils.MQ;
+import com.bugull.mq.client.Client;
+import com.bugull.mq.client.BinaryClient;
+import com.bugull.mq.client.FileClient;
 import com.bugull.mq.task.KeepAliveTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,6 +45,8 @@ public class Connection {
     private JedisPool pool;
     
     private Client client;
+    private BinaryClient binaryClient;
+    private FileClient fileClient;
     
     private JedisPoolConfig poolConfig = new JedisPoolConfig();
     private String host;
@@ -65,7 +71,6 @@ public class Connection {
     
     public void connect(){
         pool = new JedisPool(poolConfig, host, port, timeout, password, database);
-        client = new Client(pool);
         if(keepAlive > 0){
             scheduler = Executors.newSingleThreadScheduledExecutor();
             scheduler.scheduleAtFixedRate(new KeepAliveTask(), 0, keepAlive, TimeUnit.SECONDS);
@@ -79,7 +84,13 @@ public class Connection {
         if(client != null){
             client.stopAllConsume();
             client.stopAllTopicTask();
-            client.stopAllFileBroadcastTask();
+        }
+        if(binaryClient != null){
+            binaryClient.stopAllConsume();
+            binaryClient.stopAllTopicTask();
+        }
+        if(fileClient != null){
+            fileClient.stopAllFileBroadcastTask();
         }
         if(pool != null){
             pool.destroy();
@@ -87,7 +98,36 @@ public class Connection {
     }
     
     public Client getClient(){
+        if(client == null){
+            synchronized(this){
+                if(client == null){
+                    client = new Client(pool);
+                }
+            }
+        }
         return client;
+    }
+    
+    public BinaryClient getBinaryClient(){
+        if(binaryClient == null){
+            synchronized(this){
+                if(binaryClient == null){
+                    binaryClient = new BinaryClient(pool);
+                }
+            }
+        }
+        return binaryClient;
+    }
+    
+    public FileClient getFileClient(){
+        if(fileClient == null){
+            synchronized(this){
+                if(fileClient == null){
+                    fileClient = new FileClient(pool);
+                }
+            }
+        }
+        return fileClient;
     }
 
     public void setPoolConfig(JedisPoolConfig poolConfig) {

@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package com.bugull.mq.utils;
-
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.exceptions.JedisException;
+package com.bugull.mq.listener;
 
 /**
  *
  * @author Frank Wen(xbwen@hotmail.com)
  */
-public final class JedisUtil {
+public abstract class BinaryQueueListener {
     
-    public static void returnToPool(JedisPool pool, Jedis jedis){
-        try{
-            pool.returnResource(jedis);
-        }catch(JedisException ex){
-            ex.printStackTrace();
-        }
-    }
+    public abstract void onQueueMessage(String queue, byte[] message);
 
 }

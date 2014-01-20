@@ -17,7 +17,7 @@
 package com.bugull.mq.task;
 
 import com.bugull.mq.Connection;
-import com.bugull.mq.MQ;
+import com.bugull.mq.utils.MQ;
 import com.bugull.mq.utils.JedisUtil;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;

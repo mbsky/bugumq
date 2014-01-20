@@ -16,9 +16,9 @@
 
 package com.bugull.mq.listener;
 
-import com.bugull.mq.Client;
+import com.bugull.mq.client.BinaryClient;
 import com.bugull.mq.Connection;
-import com.bugull.mq.MQ;
+import com.bugull.mq.utils.MQ;
 import com.bugull.mq.exception.MQException;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,13 +49,13 @@ public abstract class BinaryTopicListener extends BinaryJedisPubSub {
             @Override
             public void run() {
                 map.remove(topic);
-                Client client = Connection.getInstance().getClient();
+                BinaryClient binaryClient = Connection.getInstance().getBinaryClient();
                 try{
-                    client.unsubscribeFileBroadcast(topic);
+                    binaryClient.unsubscribe(topic);
                 }catch(MQException ex){
 
                 }
-                client.subscribeFileBroadcast(topic);
+                binaryClient.subscribe(topic);
             }
         };
         ScheduledFuture future = scheduler.schedule(task, MQ.SUBSCRIBE_TIMEOUT, TimeUnit.SECONDS);
@@ -76,7 +76,7 @@ public abstract class BinaryTopicListener extends BinaryJedisPubSub {
         scheduler.shutdownNow();
     }
     
-    public abstract void onBinaryMessage(String topic, byte[] message);
+    public abstract void onTopicMessage(String topic, byte[] message);
     
     @Override
     public void onMessage(byte[] channel, byte[] message){
@@ -89,14 +89,7 @@ public abstract class BinaryTopicListener extends BinaryJedisPubSub {
         }catch(UnsupportedEncodingException ex){
             
         }
-        synchronized(this){
-            onBinaryMessage(s, message);
-        }
-    }
-
-    @Override
-    public void onPMessage(byte[] pattern, byte[] channel, byte[] message){
-        
+        onTopicMessage(s, message);
     }
 
     @Override
@@ -108,6 +101,11 @@ public abstract class BinaryTopicListener extends BinaryJedisPubSub {
             
         }
         removeTimer(s);
+    }
+    
+    @Override
+    public void onPMessage(byte[] pattern, byte[] channel, byte[] message){
+        
     }
 
     @Override

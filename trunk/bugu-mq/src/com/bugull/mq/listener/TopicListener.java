@@ -16,9 +16,9 @@
 
 package com.bugull.mq.listener;
 
-import com.bugull.mq.Client;
+import com.bugull.mq.client.Client;
 import com.bugull.mq.Connection;
-import com.bugull.mq.MQ;
+import com.bugull.mq.utils.MQ;
 import com.bugull.mq.exception.MQException;
 import com.bugull.mq.utils.StringUtil;
 import com.bugull.mq.utils.JedisUtil;
@@ -48,27 +48,18 @@ public abstract class TopicListener extends JedisPubSub {
      * @param topic
      * @param pattern 
      */
-    public void addTimer(final String topic, final boolean isCommonTopic){
+    public void addTimer(final String topic){
         Runnable task = new Runnable(){
             @Override
             public void run() {
                 map.remove(topic);
                 Client client = Connection.getInstance().getClient();
-                if(isCommonTopic){
-                    try{
-                        client.unsubscribe(topic);
-                    }catch(MQException ex){
-                        
-                    }
-                    client.subscribe(topic);
-                }else{
-                    try{
-                        client.unsubscribePattern(topic);
-                    }catch(MQException ex){
-                        
-                    }
-                    client.subscribePattern(topic);
+                try{
+                    client.unsubscribe(topic);
+                }catch(MQException ex){
+
                 }
+                client.subscribe(topic);
             }
         };
         ScheduledFuture future = scheduler.schedule(task, MQ.SUBSCRIBE_TIMEOUT, TimeUnit.SECONDS);
@@ -91,20 +82,9 @@ public abstract class TopicListener extends JedisPubSub {
     
     public abstract void onTopicMessage(String topic, String message);
     
-    public abstract void onPatternMessage(String pattern, String topic, String message);
-    
     @Override
     public void onMessage(String channel, String message){
-        synchronized(this){
-            onTopicMessage(channel, message);
-        }
-    }
-    
-    @Override
-    public void onPMessage(String pattern, String channel, String message){
-        synchronized(this){
-            onPatternMessage(pattern, channel, message);
-        }
+        onTopicMessage(channel, message);
     }
     
     @Override
@@ -117,9 +97,7 @@ public abstract class TopicListener extends JedisPubSub {
             jedis = pool.getResource();
             String retainMessage = jedis.get(MQ.RETAIN + channel);
             if(!StringUtil.isNull(retainMessage)){
-                synchronized(this){
-                    onTopicMessage(channel, retainMessage);
-                }
+                onTopicMessage(channel, retainMessage);
             }
         }catch(Exception ex){
             ex.printStackTrace();
@@ -129,8 +107,13 @@ public abstract class TopicListener extends JedisPubSub {
     }
     
     @Override
+    public void onPMessage(String pattern, String channel, String message){
+        //do nothing
+    }
+    
+    @Override
     public void onPSubscribe(String pattern, int subscribedChannels){
-        removeTimer(pattern);
+        //do nothing
     }
 
     @Override
