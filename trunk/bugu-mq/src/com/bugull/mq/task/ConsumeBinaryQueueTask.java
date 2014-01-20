@@ -18,7 +18,6 @@ package com.bugull.mq.task;
 
 import com.bugull.mq.utils.MQ;
 import com.bugull.mq.listener.BinaryQueueListener;
-import com.bugull.mq.utils.BinaryUtil;
 import com.bugull.mq.utils.JedisUtil;
 import java.util.List;
 import redis.clients.jedis.JedisPool;
